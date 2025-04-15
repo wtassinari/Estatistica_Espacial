@@ -5,6 +5,7 @@ project:
 website:
   title: "Estatística Espacial"
   navbar:
+    logo: figuras/logorural.jpg     # <- Caminho para sua imagem
     left:
       - text: Welcome
         href: index.qmd

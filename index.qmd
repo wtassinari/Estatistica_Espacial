@@ -4,7 +4,9 @@ subtitle: "`Especialização em Estatística Aplicada (DEMAT/UFRRJ)`"
 format: html
 ---
 
-Texto........................
+
+![Descrição da imagem](figuras/rural_drone.jpg){width="70%" style="display: block; margin: auto;"}
+
 
 ## Cronograma
 
