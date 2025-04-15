@@ -1321,5 +1321,12 @@
     "title": "Quarto Websites Workshop",
     "section": "Your Turn",
     "text": "Your Turn\nAdd a listing page to your site:\n\nCreate a page to house the listing\nEither:\n\npopulate a .yml file with a couple of items (use projects/project.yml as a template), or\ncreate some placeholder .qmd files.\n\nAdd the page to your site navigation\nClean up any template listing pages/files/folders you don’t want\n\n\n  \n    −\n    +\n \n 10:00"
+  },
+  {
+    "objectID": "index.html#cronograma",
+    "href": "index.html#cronograma",
+    "title": "Estatística Espacial",
+    "section": "Cronograma",
+    "text": "Cronograma\n\n\n\nTime\nTopic\nInstructor\n\n\n\n\n09:00 - 9:20\nIntroduction\nCharlotte\n\n\n09:20 - 9:50\nBasics\nCharlotte\n\n\n09:50 - 10:30\nStyle\nEmil\n\n\n10:30 - 11:00\nCoffee Break\n\n\n\n11:00 - 12:30\nNavigation\nCharlotte\n\n\n12:30 - 13:30\nLunch\n\n\n\n13:30 - 15:00\nCSS\nEmil\n\n\n15:00 - 15:30\nCoffee Break\n\n\n\n15:30 - 16:30\nListings\nCharlotte\n\n\n16:30 - 17:00\nRoundup\nEmil"
   }
 ]
