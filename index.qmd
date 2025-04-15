@@ -4,7 +4,7 @@ subtitle: "`Especialização em Estatística Aplicada (DEMAT/UFRRJ)`"
 format: html
 ---
 
-Do you need a professional website to showcase your work? Or have you got an idea for a website at work, but it needs to reflect your organization's brand? If you've used Quarto to produce a document, you've already got the technical skills to create a Quarto website. In this workshop, you'll learn everything else you need to build a website and customize its appearance.
+Texto........................
 
 ## Cronograma
 
