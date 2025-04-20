@@ -62,9 +62,9 @@ colFmt <- function(x,color) {
 ```
 
 
-```{r echo=F, fig.align="center", out.width="90%"}
+```{r echo=F, fig.align="center", out.width="90%", fig.asp=0.5}
 
-include_graphics('figuras/rural_drone.jpg')
+include_graphics('figuras/rural2.png')
 ```
 
 Fonte: [Storymap UFRRJ](https://uploads.knightlab.com/storymapjs/900b7a9343559e19eae3c9dffed08d71/ufrrj/draft.html)
