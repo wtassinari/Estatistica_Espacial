@@ -7,6 +7,7 @@ date: "2025"
 output:
   rmdformats::robobook:
     highlight: kate
+    css: style.css
 ---
 
 ```{r setup, include=FALSE}
@@ -69,100 +70,112 @@ include_graphics('figuras/rural2.png')
 
 Fonte: [Storymap UFRRJ](https://uploads.knightlab.com/storymapjs/900b7a9343559e19eae3c9dffed08d71/ufrrj/draft.html)
 
+
+
 # Introdução à Análise Estatística Espacial
 
 ## O que é Análise Estatística Espacial ?
 
 - São métodos estatísticos que levam em consideração a localização espacial do fenômeno estudado;
 
-- Segundo Bailey & Gatrell (1995), *"Análise estatística espacial pode ser realizada quando os dados são espacialmente localizados e se considera explicitamente a possível importância de seu arranjo espacial na análise ou interpretação dos resultados"*
+- Segundo Bailey & Gatrell (1995), *"A análise estatística espacial é aplicada quando os dados possuem localização geográfica e quando o arranjo espacial desses dados é considerado relevante para a análise e interpretação dos resultados."*
 
-- A primeira pergunta a ser feita é: A distribuição dos dados apresenta um padrão aleatório ou apresenta uma agregação definida (*clusters*) ?
+- A primeira questão a ser considerada é: os dados seguem um padrão aleatório ou indicam a presença de agregações bem definidas (*clusters*) ?
 
-```{r echo=F, fig.align="center", out.width= "70%", fig.show='hold'}
+```{r echo=F, fig.align="center", out.width= "80%", fig.show='hold'}
 knitr::include_graphics('figuras/Cluster.png')
 ```
 
 ## Origem da Estatística Espacial
 
-- Dr. John Snow (1813-1858) $\rightarrow$ Considerado pai da Epidemiologia Moderna
+O uso de dados espaciais na saúde teve um marco histórico com John Snow, que em 1854 mapeou um surto de cólera em Londres, desafiando a teoria miasmática* ao identificar a contaminação da água como causa da doença. Ao mapear as mortes por cólera no Soho, John Snow identificou um foco ao redor da bomba de água da Broad Street, apoiando sua hipótese de transmissão hídrica.
+
+<span style="font-size: 10px;">
+*"Miasmática" refere-se à teoria que defendia que as doenças eram causadas por vapores ou odores nocivos (miasmas) provenientes de matéria orgânica em decomposição, particularmente em áreas úmidas ou com má higiene.
+</span>
 
 
 ```{r echo=F, fig.align="center", out.width= "80%", fig.show='hold'}
 include_graphics('figuras/snow2_2019.png')
 ```
+<span style="font-size: 11px;">
+- Mapeamento dos casos de coléra ($\bullet$) e as bombas de água (X) em Londres, 1854.
+</span>
 
-Mapeamento dos casos de coléra ($\bullet$) e as bombas de água (X) em Londres, 1854.
-
+- Dr. John Snow (1813-1858) $\rightarrow$ Considerado pai da Epidemiologia Moderna
 
 ```{r echo=F, fig.align="center", out.width= "40%", fig.show='hold'}
 include_graphics('figuras/snow_2019.png')
 ```
+\
 
+A imagem mostra homenagens a John Snow em Soho, Londres: um retrato na fachada de um pub, a réplica da bomba de água da Broad Street, e uma placa que marca a descoberta de que a cólera era transmitida pela água contaminada em 1854.
 
 ## Objetivos da Estatística Espacial
 
-1) Análise de padrões espaciais e espaço-temporais (ex: Análise
-Exploratória Espacial, Correlação Espacial)
+1) Investigar padrões espaciais e espaço-temporais, por meio de técnicas como a Análise Exploratória de Dados Espaciais (AEDE) e medidas de correlação espacial, visando identificar estruturas, agrupamentos e dependências nos dados geográficos.
 
-2) Modelagem Espacial (ex: Modelos Estatísticos de Regressão
-Espacial)
+2) Modelar fenômenos espaciais utilizando modelos estatísticos apropriados, como regressões espaciais (ex: SAR, CAR, GWR) e modelos espaço-temporais, que permitem controlar efeitos de vizinhança (dependência espacial) e heterogeneidade geográfica, com o objetivo de explicar e/ou prever fenômenos influenciados pela localização geográfico.
 
 ## Dependência Espacial ou Autocorrelação Espacial
 
-- "Independência é um pressuposto muito conveniente que faz
-grande parte da teoria estatística matemática tratável.
-Entretanto, modelos que envolvem dependência estatística são
-frequentemente mais realísticos. . . . Neste tipos de dados a
-dependência está presente em todas as direções e fica mais
-fraca a medida em que aumenta a dispersão na localização dos
-dados." (Cressie N.,1991)
+- Segundo Cressie (1991), embora a suposição de independência entre observações torne a teoria estatística mais tratável, modelos que incorporam *dependência estatística* costumam ser mais realistas, especialmente em contextos espaciais. Nesse tipo de dado, a *dependência entre observações ocorre em múltiplas direções* e tende a diminuir conforme aumenta a distância entre os locais amostrados. Em outras palavras, valores próximos no espaço tendem a ser mais semelhantes entre si do que valores distantes, o que caracteriza a autocorrelação espacial.
 
-- *"Todas as coisas se parecem, coisas mais próximas são mais parecidas que
-aquelas mais distantes."*  (Tobler, 1979). `r colFmt(" **Também conhecida como $1^a$ Lei da Geografia**",'red')`
+- *"Todas as coisas se parecem, porém coisas mais próximas tendem a ser mais semelhantes do que aquelas mais distantes."*  (Tobler, 1979). `r colFmt(" **Também conhecida como $1^a$ Lei da Geografia**",'red')`
 
 ## Tipologia dos Dados Espaciais
 
-Os diferentes tipos de dados espaciais são tradicionalmente classificados de acordo com uma tipologia. Esta caracterização diz respeito a natureza estocástica da observação.
+Os dados espaciais podem ser classificados segundo diferentes categorias, com base na natureza estocástica de suas observações e na forma como a informação geográfica é representada. Essa tipologia orienta a escolha de métodos estatísticos apropriados para análise.
 
-Noel Cressie (1993) divide a estatı́stica espacial em 3 grandes áreas:
+Segundo Noel Cressie (1993), a estatística espacial pode ser dividida em três grandes áreas:
 
-  i) `r colFmt(" **Dados de processos pontuais**",'darkmagenta')`
+  i) `r colFmt(" **Dados de Processos Pontuais ou Padrões Pontuais**",'darkmagenta')`: As observações ocorrem de maneira aleatória no espaço, como casos de uma doença, localização de crimes ou ocorrência de focos de queimadas. O objetivo é entender padrões de agrupamento, dispersão ou aleatoriedade desses pontos.
 
-  ii) `r colFmt(" **Dados de geoestatística**",'darkmagenta')`
+  ii) `r colFmt(" **Dados de Geoestatística**",'darkmagenta')`: Refere-se as observações que apresentam um atributo mensuravél em localizações contínuas ou irregulares (por exemplo, temperatura, poluição, altitude, teor de argila). Nesses casos, há interesse na dependência espacial entre valores próximos e na interpolação de valores para locais não amostrados, por meio de métodos como krigagem.
 
-  iii) `r colFmt(" **Dados de área**",'darkmagenta')`
+  iii) `r colFmt(" **Dados de Área**",'darkmagenta')`: Representam fenômenos agregados por unidades geográficas, como municípios, distritos ou setores censitários. As análises incluem autocorrelação espacial (ex: I de Moran) e modelos de regressão espacial adaptados a dados agregados.
 
-Existem métodos estatı́sticos diferentes para descrever ou analisar estes tipos de dados. Exemplo:
+<!-- Existem métodos estatı́sticos diferentes para descrever ou analisar estes tipos de dados. Exemplo: -->
 
-```{r echo=F, fig.align="center", out.width= "75%", fig.show='hold'}
-include_graphics('figuras/slide4.jpg')
+<!-- ```{r echo=F, fig.align="center", out.width= "75%", fig.show='hold'} -->
+<!-- include_graphics('figuras/slide4.jpg') -->
 
-```
+<!-- ``` -->
 
-## Padrões Pontuais
+# Padrões Pontuais
 
 * O principal interesse está no conjunto de coordenadas geográficas representando as localizações exatas de eventos.
 
-* Exemplos: Localização de crimes, localização da residência dos casos de dengue, localização de espécies vegetais, etc.
-
-* Neste caso, o dado aleatório de interesse é a localização espacial do evento.
-
-
-```{r echo=F, fig.align="center", message=FALSE, warning=FALSE, comments=NA, out.width="40%", comment=NA}
+```{r echo=F, fig.align="center", message=FALSE, warning=FALSE, comments=NA, out.width="50%", comment=NA}
 knitr::include_graphics('figuras/coordenadas.png')
 ```
 
-```{r echo=F, fig.align="center", message=FALSE, warning=FALSE, comments=NA, out.width="70%", comment=NA}
-knitr::include_graphics('figuras/pontos1.jpg')
-```
+* Exemplos típicos: localização de crimes, endereços de casos notificados de dengue, pontos de ocorrência de espécies vegetais, entre outros.
+
+* Neste tipo de dado, o evento aleatório de interesse é a posição espacial onde o fenômeno ocorre, e não uma variável medida em si. A análise busca entender se os pontos seguem um padrão aleatório, agrupado (clusters) ou disperso no espaço.
+
 
 ```{r echo=F, fig.align="center", out.width= "55%", fig.show='hold'}
 knitr::include_graphics('figuras/Cluster2.png')
 ```
 
-### Estimativas de Kernel (ou Mapas de Calor)
 
+```{r echo=F, fig.align="center", message=FALSE, warning=FALSE, comments=NA, out.width="70%", comment=NA}
+knitr::include_graphics('figuras/pontos1.jpg')
+```
+
+
+## Estimativas de Kernel (ou Mapas de Calor)
+
+As estimativas de densidade kernel são uma técnica amplamente utilizada para **representar visualmente a concentração espacial de eventos pontuais**, como casos de doenças, crimes ou ocorrências de focos de calor. Essa abordagem transforma um conjunto de pontos em uma superfície contínua de intensidade, evidenciando áreas com maior ou menor densidade (nesse caso a frequencia) de eventos.
+
+```{r echo=FALSE, fig.align="center", out.width="60%", fig.cap="Localização da ocorrência de casos de dengue em Belo Horizonte/MG"}
+knitr::include_graphics('figuras/dengueBH.png')
+```
+
+A técnica foi aplicada para identificar áreas de maior risco de dengue em Belo Horizonte/MG. O mapa resultante revela zonas de alta concentração de casos, o que pode subsidiar ações de controle vetorial e políticas públicas de saúde mais direcionadas.
+
+O objetivo principal é estimar a função de intensidade espacial $\hat{\lambda}_{\tau}(u)$, que descreve a probabilidade de ocorrência de eventos em diferentes locais da região de estudo.
 
 
 ```{r echo=F, fig.align="center", out.width= "45%", fig.show='hold'}
@@ -172,19 +185,34 @@ knitr::include_graphics('figuras/kernel2.png')
 * Estimador de intensidade de distribuição de pontos: 
 
 $$\hat{\lambda}_{\tau}(u) = \dfrac{1}{\tau^2}\sum k(\dfrac{d(u_i , u)}{\tau}), d(u_i , u) \leq \tau$$
-[*Fonte: Referência científica: Druck, S.; Carvalho, M.S.; Câmara, G.; Monteiro, A.V.M. (eds) "Análise Espacial de Dados Geográficos". Brasília, EMBRAPA, 2004](http://www.dpi.inpe.br/gilberto/livro/analise/cap2-eventos.pdf)
 
-```{r echo=F, fig.align="center", out.width= "60%", fig.show='hold'}
+### Como funciona:
+
+- Para cada ponto no espaço, é aplicado um funil de suavização (kernel) que distribui "peso" ao redor do ponto, atribuindo maior peso às áreas próximas e menor peso conforme a distância aumenta.
+
+- Ou seja, esse peso decresce com o aumento da distância a partir do centro, de acordo com uma função $k(\cdot)$, e é controlado por um parâmetro chamado largura de banda ($\tau$).
+
+- O resultado é uma superfície contínua de densidade, onde regiões com cores mais quentes (vermelho, laranja) indicam maior concentração de eventos.
+
+
+
+```{r echo=F, fig.align="center", out.width= "50%", fig.show='hold'}
 knitr::include_graphics('figuras/kernel3.png')
 ```
 
-* Localização da ocorrência de casos de dengue em Belo Horizonte/MG
+A figura acima mostra como diferentes larguras de banda ($500 m$, $1.500 m$ e $2.500 m$) alteram o grau de suavização:
 
-```{r echo=F, fig.align="center", out.width= "50%", fig.show='hold'}
-knitr::include_graphics('figuras/dengueBH.png')
-```
+i) Largura pequena ($500 m$): permite detectar agrupamentos muito locais, mas pode introduzir ruídos, ou seja, variações artificiais causadas por flutuações aleatórias nos dados, que não representam padrões reais.
 
-## Geoestatística
+ii) Largura intermediária ($1.500 m$): equilíbrio entre detalhe e suavidade.
+
+Largura maior ($2.500 m$): suaviza padrões locais, ideal para visualizar tendências gerais.
+
+
+[*Fonte: Referência científica: Druck, S.; Carvalho, M.S.; Câmara, G.; Monteiro, A.V.M. (eds) "Análise Espacial de Dados Geográficos". Brasília, EMBRAPA, 2004](http://www.dpi.inpe.br/gilberto/livro/analise/cap2-eventos.pdf)
+
+
+# Geoestatística
 
 * Podemos definir como sendo uma análise de um atributo espacialmente contínuo amostrado em localizações fixas.
 
@@ -225,7 +253,7 @@ knitr::include_graphics('figuras/geoestatistica7.png')
 
 
 
-## Dados de Área
+# Dados de Área
 
 * Na análise de áreas o atributo estudado é em geral resultado de uma medida sumáraria (ex: contagem, taxas, médias, etc.) em uma determinada área bem definida, por exemplo um polígono.
 
@@ -234,7 +262,7 @@ knitr::include_graphics('figuras/geoestatistica7.png')
 * O objetivo é a detecção e explicação de padrões e tendências observados entre áreas.
 
 
-### Mapa Temático
+## Mapa Temático
 
 * Taxas de câncer de pulmão na população branca masculina nos Estados Unidos, por condados no ano de 1998
 
@@ -242,13 +270,13 @@ knitr::include_graphics('figuras/geoestatistica7.png')
 knitr::include_graphics('figuras/area1_2019.png')
 ```
 
-### Matriz de Vizinhança
+## Matriz de Vizinhança
 
 ```{r echo=F, fig.align="center", out.width="55%"}
 knitr::include_graphics('figuras/vizinhanca.png')
 ```
 
-### Moran Global, Moran Local e Lisa Map
+## Moran Global, Moran Local e Lisa Map
 
 ```{r echo=F, fig.align="center", out.width="20%", fig.cap="Moran Global"}
 knitr::include_graphics('figuras/moran_global.png')
@@ -266,7 +294,7 @@ knitr::include_graphics('figuras/moran_local2.png')
 
 [Fonte: PANDA, Basant Kumar; KUMAR, Gulshan; AWASTHI, Ashish. District level inequality in reproductive, maternal, neonatal and child health coverage in India. BMC public health, v. 20, n. 1, p. 1-10, 2020.](https://bmcpublichealth.biomedcentral.com/articles/10.1186/s12889-020-8151-9)
 
-### Modelos de Regressão Espacial
+## Modelos de Regressão Espacial
 
 * `r colFmt(" Hipótese de independência das observações em geral é Falsa ",'orange')` $\rightarrow$ Dependência Espacial
 
@@ -290,47 +318,47 @@ correlacionada.
 $$y_i = \beta_{0}(u_i, v_i) + \sum^{p}_{k}  \beta_k (u_i, v_i) x_{ik} + \varepsilon_i \text{    , sendo  } (u_i, v_i) \text{    as coordenadas geográficas}$$
 [Fonte: ARDILLY, Pascal et al. Manuel d’analyse spatiale. 2018.](https://ec.europa.eu/eurostat/documents/3859598/9462709/INSEE-ESTAT-SPATIAL-ANA-18-EN.pdf)
 
-## Como trabalhar com Análise Estatística Espacial: Algumas ferramentas
+<!-- ## Como trabalhar com Análise Estatística Espacial: Algumas ferramentas -->
 
-### SiG QGIS
+<!-- ### SiG QGIS -->
 
-```{r echo=F, fig.align="center", out.width="80%"}
-knitr::include_graphics('figuras/QGIS.png')
-```
+<!-- ```{r echo=F, fig.align="center", out.width="80%"} -->
+<!-- knitr::include_graphics('figuras/QGIS.png') -->
+<!-- ``` -->
 
-[QGIS: Um Sistema de Informação Geográfica livre e aberto](https://www.qgis.org/pt_BR/site/)
+<!-- [QGIS: Um Sistema de Informação Geográfica livre e aberto](https://www.qgis.org/pt_BR/site/) -->
 
-### GEODA
+<!-- ### GEODA -->
 
-```{r echo=F, fig.align="center", out.width="80%"}
-knitr::include_graphics('figuras/GEODA.png')
-```
+<!-- ```{r echo=F, fig.align="center", out.width="80%"} -->
+<!-- knitr::include_graphics('figuras/GEODA.png') -->
+<!-- ``` -->
 
-[GEODA: AN INTRODUCTION TO SPATIAL DATA ANALYSIS](https://spatial.uchicago.edu/geoda)
-
-
-### R
-
-```{r echo=F, fig.align="center", out.width="60%"}
-knitr::include_graphics('figuras/logo_ubuntu.png')
-```
-
-Fonte: [Dicas para integração e instalação do R 4.2 no Ubuntu 22.04 LTS e os pacotes espaciais](https://rtask.thinkr.fr/installation-of-r-4-2-on-ubuntu-22-04-lts-and-tips-for-spatial-packages/)
+<!-- [GEODA: AN INTRODUCTION TO SPATIAL DATA ANALYSIS](https://spatial.uchicago.edu/geoda) -->
 
 
-### Python
+<!-- ### R -->
 
-```{r echo=F, fig.align="center", out.width="60%"}
-knitr::include_graphics('figuras/geopandas.png')
-```
+<!-- ```{r echo=F, fig.align="center", out.width="60%"} -->
+<!-- knitr::include_graphics('figuras/logo_ubuntu.png') -->
+<!-- ``` -->
 
-Fonte: [Github Geopandas](https://geopandas.org/en/stable/)
+<!-- Fonte: [Dicas para integração e instalação do R 4.2 no Ubuntu 22.04 LTS e os pacotes espaciais](https://rtask.thinkr.fr/installation-of-r-4-2-on-ubuntu-22-04-lts-and-tips-for-spatial-packages/) -->
 
-# Serão feitas cinco aplicações da Estatística Espacial utilização o pacote estatístico R:
 
-[Clique aqui para baixar os dados das aplicações](https://drive.google.com/drive/folders/10WMJYlwHcEX9zw3_RUjDQz5DGZByiI2N?usp=sharing)
+<!-- ### Python -->
 
-## Aplicação I: Utilizando a biblioteca *tmap* para construção de mapas temáticos
+<!-- ```{r echo=F, fig.align="center", out.width="60%"} -->
+<!-- knitr::include_graphics('figuras/geopandas.png') -->
+<!-- ``` -->
+
+<!-- Fonte: [Github Geopandas](https://geopandas.org/en/stable/) -->
+
+<!-- # Serão feitas cinco aplicações da Estatística Espacial utilização o pacote estatístico R: -->
+
+<!-- [Clique aqui para baixar os dados das aplicações](https://drive.google.com/drive/folders/10WMJYlwHcEX9zw3_RUjDQz5DGZByiI2N?usp=sharing) -->
+
+# **Aplicação I:** Utilizando a biblioteca *tmap* para construção de mapas temáticos
 
 ```{r, echo=T, out.width='90%'}
 library(tmap)
@@ -340,10 +368,10 @@ tmap_style("classic")
 qtm(World, fill = "life_exp")
 ```
 
-## Aplicação II: Baixando e construindo mapas a partir da biblioteca *geobr*
+# **Aplicação II:** Baixando e construindo mapas a partir da biblioteca *geobr*
 
 
-#### Bibliotecas que serão utilizadas:
+### Bibliotecas que serão utilizadas:
 
 ```{r, echo=T}
 library(ggplot2)
@@ -363,7 +391,7 @@ library(ggspatial)
 brasil.ufs <- read_state(code_state = "all", year=2019, showProgress = FALSE)
 ```
 
-#### Primeiro, vamos fazer um gráfico apenas com as geometrias.
+### Primeiro, vamos fazer um gráfico apenas com as geometrias.
 
 ```{r, echo=T}
 ggplot(brasil.ufs) + 
@@ -463,7 +491,7 @@ data.frame(st_coordinates(coord_pontos),
 
 ---
 
-## Aplicação III: Dengue em Dourados/MS - Parte 1: Análise exploratória
+# **Aplicação III:** Dengue em Dourados/MS - Parte 1: Análise exploratória
 
 * Nesta apresentação serão utilizados os dados que fizeram parte da dissertação de [Isis Rodrigues Reitman](https://sucupira.capes.gov.br/sucupira/public/consultas/coleta/trabalhoConclusao/viewTrabalhoConclusao.jsf?popup=true&id_trabalho=3666174) intitulada *“SAÚDE E AMBIENTE URBANO: A RELAÇÃO DE INCIDÊNCIA DE DENGUE E AS DISPARIDADES ESPACIAIS EM DOURADOS – MS"*, apresentada no [Programa de Pós-Graduação em Geografia da Universidade Federal da Grande Douradosos/MS](https://portal.ufgd.edu.br/pos-graduacao/mestrado-doutorado-geografia/index), em abril de 2016. 
 
@@ -473,7 +501,7 @@ data.frame(st_coordinates(coord_pontos),
  **OBS:** Os dados e as malhas geográficas utilizadas nessa apresentação, estão disponíveis no seguinte endereço: ([link](https://github.com/wtassinari/espacial2021))
 
 
-#### Biliotecas do R que serão utilizadas
+### Biliotecas do R que serão utilizadas
 
 ```{r, echo=T}
 
@@ -498,13 +526,13 @@ contorno.sf <- read_sf('dados/dengue_dourados/contorno.shp', crs = 31981)
 **OBS:** Um aspecto muito importante dos dados espaciais é o sistema de referência de coordenadas (CRS) que é usado. Por exemplo, uma localização de (140, 12) não é significativa se você sabe onde está a origem e se a coordenada x está a 140 metros, quilômetros ou talvez graus de distância dela (na direção x). ([link](https://rspatial.org/raster/spatial/6-crs.html))
 
 
-#### Fazendo um join com as tabelas com os setores censitários + população
+### Fazendo um join com as tabelas com os setores censitários + população
 
 ```{r, echo=T}
 setor.sf <- setor.sf %>% mutate (idsetor = as.numeric(CD_GEOCODI)) %>% inner_join(pop2010, by='idsetor')
 ```
 
-#### Lendo e plotando os casos de dengue georreferenciados em Dourados/MS
+### Lendo e plotando os casos de dengue georreferenciados em Dourados/MS
 
 ```{r, echo=T}
 casos <- read_csv('dados/dengue_dourados/dengue_dourados.csv')
@@ -518,7 +546,7 @@ ggplot(setor.sf) +
   theme_void()
 ```
 
-#### Lendo e plotando os os pontos de coleta de lixo georreferenciados em Dourados/MS
+### Lendo e plotando os os pontos de coleta de lixo georreferenciados em Dourados/MS
 
 ```{r, echo=T}
 lixo <- read_csv2('dados/dengue_dourados/lixo_dourados.csv')
@@ -534,7 +562,7 @@ ggplot(setor.sf) +
 
 - Como podemos observar, existem alguns pontos de coleta de lixo fora do contorno de Dourados/MS
 
-#### Uma forma de ficarmos só com os pontos dentro do polígono é utilizando o comando st_intersection.
+### Uma forma de ficarmos só com os pontos dentro do polígono é utilizando o comando st_intersection.
 
 
 ```{r, echo=T}
@@ -548,7 +576,7 @@ ggplot(setor.sf) +
   theme_void()
 ```
 
-#### Utilizando as informações dos casos (pontos) + do lixo (ponto) + população de cada setor censitário (mapa temático)
+### Utilizando as informações dos casos (pontos) + do lixo (ponto) + população de cada setor censitário (mapa temático)
 
 ```{r, echo=T,  out.width="70%"}
 ggplot(setor.sf) + 
@@ -561,7 +589,7 @@ ggplot(setor.sf) +
   scale_colour_manual(values = c("Caso" = "red", "Lixo" = "slamon")) +
   theme_minimal()
 ```
-#### Construindo os buffers
+### Construindo os buffers
 
 * Agora serão construidos buffers de 500m de distância ao redor de cada ponto de coleta de lixo. Isso é interessante para verificar se os casos de dengue ocorrem em um raio de até 500m de distância dos pontos de coleta de lixo. Ou seja, a pergunta é, será que a distância dos pontos de coeta de lixo influenciam a ocorrência do caso de dengue ?
 
@@ -579,7 +607,7 @@ ggplot(setor.sf) +
   theme_minimal()
 ```
 
-#### Represntando os casos e o lixo de forma interativa
+### Represntando os casos e o lixo de forma interativa
 
 ```{r, echo=T,  out.width="90%"}
 tm_shape(setor.sf) +  tm_borders("black") +
@@ -589,7 +617,7 @@ tm_shape(setor.sf) +  tm_borders("black") +
   tmap_mode("view")
 ```
 
-#### Convertendo o dado de pontos (padrão pontual) para dados de área
+### Convertendo o dado de pontos (padrão pontual) para dados de área
 
 ```{r, echo=T}
 ## conta casos por setor 
@@ -619,19 +647,19 @@ setor.sf <- setor.sf |>
 ```
 
 
-#### Plotando o mapa temático dos casos por setor censitário
+### Plotando o mapa temático dos casos por setor censitário
 
 ```{r, echo=T,  out.width="70%"}
 plot(setor.sf['casos'])
 ```
 
-#### Plotando o mapa temático dos pontos de coleta de lixo por setor censitário
+### Plotando o mapa temático dos pontos de coleta de lixo por setor censitário
 
 ```{r, echo=T,  out.width="70%"}
 plot(setor.sf['lixo'])
 ```
 
-#### Calculando a taxa de incidência e plotando o mapa temático dos pontos de coleta de lixo por setor censitário
+### Calculando a taxa de incidência e plotando o mapa temático dos pontos de coleta de lixo por setor censitário
 
 ```{r, echo=T,  out.width="70%"}
 setor.sf$tx <- (setor.sf$casos/setor.sf$pop) * 1000
@@ -640,7 +668,7 @@ setor.sf$tx[is.na(setor.sf$tx)] <- 0 # Transformando os missings em zero
 summary(setor.sf$tx)
 ```
 
-#### Plotando a distribuição da incidência em Dourados/MS
+### Plotando a distribuição da incidência em Dourados/MS
 
 ```{r, echo=T,  out.width="70%"}
 library(wesanderson)
@@ -653,7 +681,7 @@ ggplot(setor.sf) +
   theme_void()
 ```
 
-#### Kernel por atributos
+### Kernel por atributos
 
 - Vamos plotar o kernel por atributos referente a taxa de incidência de dengue em Dourados/MS.
 
@@ -681,7 +709,7 @@ names(centroides.sp) <- c('X','Y')
 plot(centroides.sp)
 ```
 
-#### Colocando os pontos no formato sp
+### Colocando os pontos no formato sp
 
 ```{r, echo=T,  out.width="70%"}
 centroides.ppp <- ppp(centroides.sp$X,centroides.sp$Y, dourados.w)
@@ -689,14 +717,14 @@ centroides.ppp <- ppp(centroides.sp$X,centroides.sp$Y, dourados.w)
 plot(centroides.ppp,pch=19,cex=0.5)
 ```
 
-#### Fazendo o kernel por atributo da taxa de detecção
+### Fazendo o kernel por atributo da taxa de detecção
 
 ```{r, echo=T,  out.width="70%"}
 kernel.tx <- density(centroides.ppp, 500, weights = setor.sf$tx, scalekernel = TRUE)
 plot(kernel.tx)
 ```
 
-#### Construindo a matriz de vizinhança para verificar a autocorrelação espacial
+### Construindo a matriz de vizinhança para verificar a autocorrelação espacial
 
 ```{r, echo=T,  out.width="70%"}
 library(spdep)
@@ -713,7 +741,7 @@ coord <- coordinates(setor.sp) # coordenadas dos centroidas dos poligonos de dou
 class(setor.sp)
 ```
 
-#### Verificando a malha de conectividade da vizinhança de Dourados/MS
+### Verificando a malha de conectividade da vizinhança de Dourados/MS
 
 ```{r, echo=T,  out.width="70%"}
 viz.sf <- as(nb2lines(viz, coords = coord), 'sf')
@@ -730,14 +758,14 @@ mapa.viz <- ggplot(setor.sf) +
 mapa.viz
 ```
 
-#### Obtendo a correlação da taxa de incidência de dengue Dourados/MS
+### Obtendo a correlação da taxa de incidência de dengue Dourados/MS
 
 ```{r, echo=T,  out.width="70%"}
 pesos.viz <- nb2listw(viz)
 moran.test(setor.sf$tx, pesos.viz)
 ```
 
-#### Plotando o correlograma
+### Plotando o correlograma
 
 ```{r, echo=T,  out.width="70%"}
 correl <- sp.correlogram(viz, setor.sf$tx, order = 8, method = "I")
@@ -748,7 +776,7 @@ correl
 plot(correl)
 ```
 
-#### Mapeando os polígonos que tiveram os p-valores mais significativos no Moran Local.
+### Mapeando os polígonos que tiveram os p-valores mais significativos no Moran Local.
 
 ```{r, echo=T,  out.width="70%"}
 setor.sf$pval <- localmoran(setor.sf$tx, pesos.viz)[,5]
@@ -758,7 +786,7 @@ tm_shape(setor.sf) +
   tm_scale_bar(width = 0.15) 
 ```
 
-#### Moran Local (Lisa Map) da taxa de incidência Dourados/MS
+### Moran Local (Lisa Map) da taxa de incidência Dourados/MS
 
 ```{r, echo=T,  out.width="70%"}
 resI <- localmoran.sad(lm(setor.sf$tx ~ 1), 1:length(viz), viz, style = "W")
@@ -779,9 +807,9 @@ ggplot(setor.sf) +
   theme_void()
 ```
 
-## Aplicação IV: Dengue em Dourados/MS - Parte 2: Modelagem (Modelos Linear, CAR e GWR)
+# **Aplicação IV:** Dengue em Dourados/MS - Parte 2: Modelagem (Modelos Linear, CAR e GWR)
 
-#### Ajustando o modelo de regressão linear simples.
+### Ajustando o modelo de regressão linear simples.
 
 ```{r, echo=T,  out.width="70%"}
 # Transformando os missings em zero
@@ -791,14 +819,14 @@ dourados.lm <- lm(tx ~ lixo, data = setor.sf)
 summary(dourados.lm)
 ```
 
-#### Checando os residuos para verificar a presença de autocorrelação.
+### Checando os residuos para verificar a presença de autocorrelação.
 
 ```{r, echo=T,  out.width="70%"}
 dourados.lm$lmresid <- residuals(dourados.lm)
 moran.test(dourados.lm$lmresid, pesos.viz)
 ```
 
-#### Ajustando o modelo CAR (Spatial Error Model)
+### Ajustando o modelo CAR (Spatial Error Model)
 
 ```{r, echo=T,  out.width="70%"}
 library(spatialreg)
@@ -806,14 +834,14 @@ dourados.car <- errorsarlm(tx ~ lixo, data = setor.sf, listw = pesos.viz)
 summary(dourados.car)
 ```
 
-#### Checando os residuos para verificar a presença de autocorrelação
+### Checando os residuos para verificar a presença de autocorrelação
 
 ```{r, echo=T,  out.width="70%"}
 dourados.car$carresid <- residuals(dourados.car)
 moran.test(dourados.car$carresid, pesos.viz)
 ```
 
-#### Ajustando o modelo GWR (Geographically Weighted Regression)
+### Ajustando o modelo GWR (Geographically Weighted Regression)
 
 ```{r, echo=T,  out.width="70%"}
 # Biblioteca para ajustar o modelos GWR
@@ -838,21 +866,21 @@ results <- as.data.frame(dourados.gwr$SDF)
 head(results)
 ```
 
-#### Verificando a distribuição dos coeficientes de regressão para a variável lixo
+### Verificando a distribuição dos coeficientes de regressão para a variável lixo
 
 ```{r, echo=T,  out.width="80%"}
 hist(results$lixo)
 abline(v = median(results$lixo), col = "red")
 ```
 
-#### Verificando a distribuição dos *localR2*
+### Verificando a distribuição dos *localR2*
 
 ```{r, echo=T,  out.width="80%"}
 hist(results$localR2)
 abline(v = median(results$localR2), col = "blue")
 ```
 
-#### Incorporando alguns parâmetros de saída do modelo na tabela *setor.sf*
+### Incorporando alguns parâmetros de saída do modelo na tabela *setor.sf*
 
 ```{r, echo=T,  out.width="70%"}
 setor.sf$coef.lixo <- results$lixo
@@ -860,7 +888,7 @@ setor.sf$localR2 <- results$localR2
 setor.sf$pred.gwr <- results$pred
 ```
 
-#### Mapa dos coeficientes de regressão para a variável lixo
+### Mapa dos coeficientes de regressão para a variável lixo
 
 ```{r, echo=T,  out.width="80%"}
 map.lixo <- ggplot(setor.sf) + 
@@ -870,7 +898,7 @@ map.lixo
 
 ```
 
-#### Checando os residuos para verificar a presença de autocorrelação para o modelo GWR.
+### Checando os residuos para verificar a presença de autocorrelação para o modelo GWR.
 
 ```{r, echo=T,  out.width="70%"}
 # Calculando os resíduos para o modelo GWR
@@ -879,7 +907,7 @@ results$residuos <- setor.sf$tx - results$pred
 moran.test(results$residuos, pesos.viz)
 ```
 
-#### Mapeando os coeficientes de regressão para a variável lixo por significancia através do teste de wald
+### Mapeando os coeficientes de regressão para a variável lixo por significancia através do teste de wald
 
 ```{r, echo=T,  out.width="100%"}
 # Calculando a estatística de wald
@@ -898,7 +926,7 @@ grid.arrange(map.lixo, map.wald, ncol = 2)
 
 ```
 
-#### Mapa dos coeficientes de determinação regionalizados ($R^2$ local).
+### Mapa dos coeficientes de determinação regionalizados ($R^2$ local).
 
 ```{r, echo=T,  out.width="90%"}
 ggplot(setor.sf) + 
@@ -907,7 +935,7 @@ ggplot(setor.sf) +
 
 ```
 
-#### Verificando a distribuição dos preditos.
+### Verificando a distribuição dos preditos.
 
 ```{r, echo=T,  out.width="100%"}
 histdens <- function(x, titulo = "") {
@@ -927,7 +955,7 @@ hist.car <- histdens(dourados.car$fitted.values, "Pred CAR")
 hist.gwr <- histdens(results$pred, "Pred GWR")
 ```
 
-#### Mapeando os valores observados e preditos dos modelos ajustados
+### Mapeando os valores observados e preditos dos modelos ajustados
 
 ```{r, echo=T,  out.width="100%"}
 library(colorspace)  # 
@@ -974,7 +1002,7 @@ library(gridExtra)
 grid.arrange(tx.bruta, pred.lm, pred.car, pred.gwr, ncol = 2)
 ```
 
-#### Comparando a distribuição dos resíduos dos modelos ajustados
+### Comparando a distribuição dos resíduos dos modelos ajustados
 
 ```{r, echo=T,  out.width="90%"}
 library(vioplot)
@@ -983,7 +1011,7 @@ vioplot(dourados.lm$residuals, dourados.car$residuals, results$residuos, names =
 title("Gráficos violinos da distribuição dos resíduos")
 ```
 
-#### Mapeando os resíduos dos modelos ajustados
+### Mapeando os resíduos dos modelos ajustados
 
 ```{r, echo=T,  out.width="100%"}
 library(colorspace)  # 
@@ -1022,9 +1050,9 @@ grid.arrange(res.lm, res.car, res.gwr, ncol = 2)
 
 ```
 
-## Aplicação V: Geoestatística com dados de pluviosidade na cidade do Rio de Janeiro/RJ
+# **Aplicação V:** Geoestatística com dados de pluviosidade na cidade do Rio de Janeiro/RJ
 
-#### Biliotecas do R que serão utilizadas
+### Biliotecas do R que serão utilizadas
 
 ```{r, echo=T}
 library(sf)
@@ -1037,7 +1065,7 @@ library(raster)
 library(leaflet)
 ```
 
-#### Importando a tabela com a chuva acumulada média de 7 dias das últimas 24hs e 96hs das estações pluviométricas da cidde do Rio de Janeiro
+### Importando a tabela com a chuva acumulada média de 7 dias das últimas 24hs e 96hs das estações pluviométricas da cidde do Rio de Janeiro
 
 [Descrição das Estações (Alerta Rio)](http://www.sistema-alerta-rio.com.br/dados-meteorologicos/info-estacoes/)
 
@@ -1047,14 +1075,14 @@ library(leaflet)
 pluvio <- read.csv("dados/chuva_rio/pluviosidade.csv", sep=";")
 ```
 
-#### Análise Gráfica Descritiva 
+### Análise Gráfica Descritiva 
 
 ```{r, echo=T}
 quantil <- quantile(pluvio$acumulado_24h, seq(0,1,0.2))
 quantil
 ```
 
-#### Transformar os dados em um objeto espacial do R
+### Transformar os dados em um objeto espacial do R
 
 * x - Longitude
 * y - Latitude
@@ -1063,7 +1091,7 @@ quantil
 sp::coordinates(pluvio) = ~ x + y
 ```
 
-#### Análise Gráfica Descritiva com os dados espaciais
+### Análise Gráfica Descritiva com os dados espaciais
 
 ```{r, echo=T,  out.width="90%"}
 # Bubble plot
@@ -1075,7 +1103,7 @@ bubble(pluvio, "acumulado_24h", key.entries = quantil, pch=19, col="blue")
 spplot(pluvio['acumulado_24h'], scales=list(draw=T), key.space="right", colorkey=T)
 ```
 
-#### Modelando o variograma experimental (ou empírico)
+### Modelando o variograma experimental (ou empírico)
 
 - **width** - Distância média entre amostras ou distância dos lags
 - **cutoff** - Máxima distância
@@ -1090,7 +1118,7 @@ variogram.emp
 plot(variogram.emp, main = "Empirical variogram", pch = 19, col = "darkblue")
 ```
 
-#### Ajustando o semivariograma teórico
+### Ajustando o semivariograma teórico
 
 - **Sill** - Semivariância estrutural ou contribuição (ponto máximo que chega ao plato no eixo de y)
 - **Range** - Alcance (ponto máximo em x)
@@ -1131,7 +1159,7 @@ plot.gau <- plot(variogram.emp, gau.fit, main = "Modelo Gaussiano")
 plot.wav <- plot(variogram.emp, wav.fit, main = "Modelo Wave")
 ```
 
-#### Validação cruzada 
+### Validação cruzada 
 
 - **RMSE** (root mean squared error): é a medida que calcula "a raiz quadrática média" dos erros entre valores observados (reais) e predições (hipóteses).
 
@@ -1188,7 +1216,7 @@ rownames(tabela) <- rnames # substitui o nome das linhas simplificadas na tab or
 tabela
 ```
 
-#### Criando os grids do contorno da cidade do Rio de Janeiro para intermpolação
+### Criando os grids do contorno da cidade do Rio de Janeiro para intermpolação
 
 ```{r, echo=T}
 # Importando o contorno do Rio
@@ -1207,7 +1235,7 @@ grid <- as(rp, "SpatialPixelsDataFrame")
 sp::plot(grid)
 ```
 
-#### Krigagem
+### Krigagem
 
 ```{r, echo=T}
 # Colocando os dados de chuva e o grid na mesma projecao
@@ -1227,7 +1255,7 @@ plot.wav <- plot(mapa_chuva_wav, main = "Modelo Wave")
 
 ```
 
-#### Auto Krige 
+### Auto Krige 
 
 ```{r, echo=T}
 # Modelando
@@ -1241,7 +1269,7 @@ auto.krige.cv <- autoKrige.cv(acumulado_24h~x+y, pluvio, model = 'Exp')
 summary(auto.krige.cv)
 ```
 
-#### Convertendo para o formato raster - auto krige
+### Convertendo para o formato raster - auto krige
 
 ```{r, echo=T}
 raster_chuva <- raster(auto.krige$krige_output)
@@ -1261,7 +1289,7 @@ writeRaster(raster_chuva,
 raster_chuva <- raster("dados/chuva_rio/chuva_auto.tiff")
 ```
 
-#### Fazendo o mapa interativo com as estações
+### Fazendo o mapa interativo com as estações
 
 ```{r, echo=T}
 # Importando os dados referente as estatções pluviométricas
@@ -1334,7 +1362,7 @@ hideGroup(group = c("Bairros"))
 
 
 
-## Bibliografia sugerida
+# Bibliografia sugerida
 
 * Druck, S.; Carvalho, M.S.; Câmara, G.; Monteiro, A.V.M. (eds). [Análise Espacial de Dados Geográficos](http://www.dpi.inpe.br/gilberto/livro/analise/). Brasília, EMBRAPA, 2004.
 
