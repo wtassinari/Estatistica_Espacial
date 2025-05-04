@@ -150,10 +150,19 @@ Segundo Noel Cressie (1993), a estatística espacial pode ser dividida em três 
 knitr::include_graphics('figuras/coordenadas.png')
 ```
 
-* Exemplos típicos: localização de crimes, endereços de casos notificados de dengue, pontos de ocorrência de espécies vegetais, entre outros.
+## Exemplos de aplicação
 
-* Neste tipo de dado, o evento aleatório de interesse é a posição espacial onde o fenômeno ocorre, e não uma variável medida em si. A análise busca entender se os pontos seguem um padrão aleatório, agrupado (clusters) ou disperso no espaço.
+::: box-dica3
+- 🏥 Localização de casos de uma doença notificados em uma cidade.
+- 🌳 Distribuição espacial de árvores em um parque urbano.
+- 🐾 Registros de avistamentos de animais silvestres em uma reserva.
+- 🔥 Pontos de ocorrência de focos de incêndio florestal detectados por satélite.
+:::
 
+::: box-dica2
+Neste tipo de dado, o evento aleatório de interesse é a posição espacial onde o fenômeno ocorre, e não uma variável medida em si. A análise busca entender se os pontos seguem um padrão aleatório, agrupado (clusters) ou disperso no espaço.
+
+:::
 
 ```{r echo=F, fig.align="center", out.width= "55%", fig.show='hold'}
 knitr::include_graphics('figuras/Cluster2.png')
@@ -184,8 +193,27 @@ knitr::include_graphics('figuras/kernel2.png')
 
 * Estimador de intensidade de distribuição de pontos: 
 
-$$\hat{\lambda}_{\tau}(u) = \dfrac{1}{\tau^2}\sum k(\dfrac{d(u_i , u)}{\tau}), d(u_i , u) \leq \tau$$
+$$\hat{\lambda}_{\tau}(u) = \dfrac{1}{\tau^2}\sum k(\dfrac{d(u_i , u)}{\tau}) \text{   ,   } d(u_i , u) \leq \tau$$
 
+Sabendo que:
+
+- $\hat{\lambda}_{\tau}(u)$: estimativa da intensidade do processo pontual no ponto $u$.
+    
+- $\tau$: parâmetro de suavização (largura de banda), define o raio de influência dos pontos ao redor de $u$.
+    
+- $u_i$: coordenadas dos pontos observados no plano (ex.: localização dos eventos).
+    
+- $d(u_i, u)$: distância entre o ponto observado $u_i$ e o ponto de avaliação $u$. Normalmente, a distância euclidiana.
+    
+- $k(\cdot)$: função kernel que define o peso atribuído a cada ponto com base na distância. Exemplos:
+    
+i) *Kernel gaussiano*: atribui maior peso aos pontos mais próximos.
+ii) *Kernel uniforme*: todos os pontos dentro do raio recebem o mesmo peso.
+iii) *Kernel Epanechnikov*: pesos decrescem com a distância, chegando a zero na borda.
+
+    
+- Condição $d(u_i, u) \leq \tau$: garante que apenas os pontos dentro da vizinhança (de raio $\tau$) contribuam para a estimativa.
+    
 ### Como funciona:
 
 - Para cada ponto no espaço, é aplicado um funil de suavização (kernel) que distribui "peso" ao redor do ponto, atribuindo maior peso às áreas próximas e menor peso conforme a distância aumenta.
@@ -194,7 +222,12 @@ $$\hat{\lambda}_{\tau}(u) = \dfrac{1}{\tau^2}\sum k(\dfrac{d(u_i , u)}{\tau}), d
 
 - O resultado é uma superfície contínua de densidade, onde regiões com cores mais quentes (vermelho, laranja) indicam maior concentração de eventos.
 
+::: box-dica1
 
+🌧️ Analogia intuitiva:
+
+O kernel atua como um limpador de para-brisa, pesando mais os eventos próximos e menos os eventos muito distantes. A escolha do tamanho do limpador ($\tau$) e do tipo de movimento (forma da função kernel) define o quanto você vê ao redor do ponto onde está focando.
+:::
 
 ```{r echo=F, fig.align="center", out.width= "50%", fig.show='hold'}
 knitr::include_graphics('figuras/kernel3.png')
@@ -214,34 +247,95 @@ Largura maior ($2.500 m$): suaviza padrões locais, ideal para visualizar tendê
 
 # Geoestatística
 
-* Podemos definir como sendo uma análise de um atributo espacialmente contínuo amostrado em localizações fixas.
+* Dados usados em geoestatística são atributos contínuos medidos em localizações fixas, na maioria das vezes amostrados no espaço geográfico, e que queremos analisar para entender como um fenômeno varia no espaço.
 
-* Os dados compreendem um conjunto de localizações (em geral latitudes e longitudes), mas atribuidos a eles uma medida, como por exemplo: volume de chuva, concentração de poluentes no ar, número de ovos de Aedes postado em ovitrampas, etc.
+## Estrutura dos dados geoestatísticos
+
+Imagine que você tem um conjunto de pontos no mapa, e para cada ponto você tem um valor observado. O conjunto de dados geralmente tem:
+
+|   Latitude   |  Longitude   | Atributo Mensurado |
+|:-----------:|:------------:|:----------------:|
+|   -22.90    |   -43.20     |       5.4        |
+|   -22.91    |   -43.22     |       6.1        |
+|   -22.92    |   -43.18     |       5.9        |
+
+## Exemplos de aplicação
+
+::: box-dica3
+- 🌧️ Medição da quantidade de chuva em diferentes locais de uma cidade.</li>
+- 🦟 Contagem de ovos de Aedes aegypti em ovitrampas.</li>
+- 🌫️ Concentração de poluentes no ar em pontos georreferenciados.</li>
+- 🌽 Análise da produtividade agrícola em diferentes talhões de uma fazenda.</li>
+
+:::
 
 
-* A determinação experimental do semivariograma, para cada valor de $x_i$, considera todos os pares de amostras $z(x)$ e $z(x+h)$, separadas pelo vetor distância $h$, a partir da equação: 
+* Umas das aplicações mais importantes da geoestatística é a interpolação de dados, ou seja, estimação de valores em locais onde não há medição.
 
-```{r echo=F, fig.align="center", out.width= "25%", fig.show='hold'}
-knitr::include_graphics('figuras/variograma3.png')
-```
+
+## Semivariograma: a base da análise espacial
+
+Uma das principais ferramentas da geoestatística é o semivariograma, que mede o quanto dois pontos próximos no espaço se parecem (ou se diferem) com relação ao valor de uma variável.
+
+::: box-dica2
+**A ideia central é**: Se dois pontos estão muito próximos, é esperado que seus valores sejam parecidos. Já se estiverem distantes, a diferença entre os valores tende a aumentar.
+
+:::
+
+A versão experimental do semivariograma é calculada para diferentes distâncias entre os pontos, usando a seguinte fórmula:
+
+<!-- * A determinação experimental do semivariograma, para cada valor de $x_i$, considera todos os pares de amostras $z(x)$ e $z(x+h)$, separadas pelo vetor distância $h$, a partir da equação:  -->
+
+<!-- ```{r echo=F, fig.align="center", out.width= "25%", fig.show='hold'} -->
+<!-- knitr::include_graphics('figuras/variograma3.png') -->
+<!-- ``` -->
 
 
 $$\hat{\gamma}(h) = \dfrac{1}{2N(h)}\sum^{N(h)}_{i=1}[z(x_i) - z(x_i + h)]^2 $$
+ Sabendo que:
+ 
+ - $\hat{\gamma}(h)$: valor estimado do fenômeno para a distância $h$;
 
-* Sendo $\hat{\gamma}(h)$ o semivariograma estimado e $N(h)$ o número de pares de valores medidos, $z(x)$ e $z(x+h)$, separados pelo vetor $h$.  
+- $N(h)$: número de pares de pontos separados por uma distância $h$;
+
+- $z(x_i)$: valor observado da variável na localização $x_i$;
+
+- $z(x_i + h)$: valor observado da variável em um ponto a uma distância $h$ de $x_i$.
+
+* A expressão representa a \textbf{diferença média ao quadrado} entre os valores da variável observada em pares de pontos separados pela distância $h$.
+
+
+
+<!-- * Sendo $\hat{\gamma}(h)$ o semivariograma estimado e $N(h)$ o número de pares de valores medidos, $z(x)$ e $z(x+h)$, separados pelo vetor $h$.   -->
 
 ```{r echo=F, fig.align="center", out.width= "40%", fig.show='hold'}
 include_graphics('figuras/variograma1.png')
 ```
 
-* Esta fórmula, entretanto, não é robusta. Podem existir situações em que variabilidade local não é constante e se
-modifica ao longo da área de estudo (heteroscedasticidade). 
+::: box-dica1
+
+📌 **Efeito Pepita (C₀)**: É a variação observada mesmo quando a distância entre os pontos é muito pequena ou zero. Costuma representar erros de medição ou variabilidade microscópica não capturada.
+
+📌 **Patamar (C)**: É o valor em que o variograma se estabiliza, indicando que a partir de certa distância, a variabilidade entre os pontos não aumenta mais. Representa a variância total dos dados.
+
+📌 **Alcance (a)**: É a distância a partir da qual dois pontos deixam de estar correlacionados. Até essa distância, os valores ainda apresentam semelhança espacial, ou seja, após essa distância, tornam-se independentes.
+
+:::
+
+Apesar de útil, essa fórmula não é robusta em todas as situações. Em alguns casos, a variabilidade não é constante ao longo da área estudada — o que chamamos de heterocedasticidade. Nesses cenários, modelos diferentes podem ser utilizados para representar o comportamento do semivariograma. Por exemplo:
+
+- Modelo Exponencial
+
+- Modelo Esférico
+
+- Modelo Gaussiano
+
+
+
 
 ```{r echo=F, fig.align="center", out.width= "40%", fig.show='hold'}
 include_graphics('figuras/variograma2.png')
 ```
-
-[*Fonte: Referência científica: Druck, S.; Carvalho, M.S.; Câmara, G.; Monteiro, A.V.M. (eds) "Análise Espacial de Dados Geográficos". Brasília, EMBRAPA, 2004](http://www.dpi.inpe.br/gilberto/livro/analise/cap3-superficies.pdf)
 
 
 * **Exemplo:** Mapa sobre o teor de argila no solo.
@@ -250,49 +344,179 @@ include_graphics('figuras/variograma2.png')
 knitr::include_graphics('figuras/geoestatistica7.png')
 ```
 
+A imagem mostra a interpolação do teor de argila em uma área agrícola da Fazenda Canchim (SP), a partir de amostras de solo coletadas em campo. Diversos métodos são comparados: **a geoestatística (krigagem)**, que utiliza a estrutura de dependência espacial dos dados via semivariograma e produz um mapa suavizado e estatisticamente robusto; o método do **inverso da distância (IDW)**, que pondera os pontos mais próximos com maior influência, resultando em maior detalhamento local, mas com risco de exagerar variações; a **média simples**, que suaviza os dados sem considerar plenamente a variabilidade espacial; e o método do **vizinho mais próximo**, que gera áreas abruptas ao atribuir a cada região o valor da amostra mais próxima, sem suavização. O exemplo evidencia como a escolha do método de interpolação impacta diretamente a qualidade e continuidade do mapa final.
 
 
+
+[*Fonte: Referência científica: Druck, S.; Carvalho, M.S.; Câmara, G.; Monteiro, A.V.M. (eds) "Análise Espacial de Dados Geográficos". Brasília, EMBRAPA, 2004](http://www.dpi.inpe.br/gilberto/livro/analise/cap3-superficies.pdf)
 
 # Dados de Área
 
-* Na análise de áreas o atributo estudado é em geral resultado de uma medida sumáraria (ex: contagem, taxas, médias, etc.) em uma determinada área bem definida, por exemplo um polígono.
+* Na análise espacial por áreas, o atributo de interesse costuma ser uma medida agregada (como contagem de casos, taxa de mortalidade, média de renda, etc.) calculada dentro de uma unidade geográfica bem definidas (como bairros, municípios, setores censitários ou regiões administrativas.)
 
-* Tal polígono cuja forma pode ser complexa bem como as relações de vizinhança.
+* Essas áreas são representadas por polígonos, que podem ter formas irregulares e manter relações espaciais com as áreas vizinhas, seja por fronteiras compartilhadas, conexões físicas (como estradas e rios), ou por semelhanças em características socioeconômicas (como nível de renda ou acesso a serviços).
 
-* O objetivo é a detecção e explicação de padrões e tendências observados entre áreas.
+::: box-dica2
+O objetivo da análise de dados de área é identificar, explicar e interpretar padrões espaciais e tendências que ocorrem entre essas unidades geográficas pré-definidas.
 
+:::
+
+## Exemplos de aplicação
+
+::: box-dica3
+
+- 🦟 Taxa de incidência de dengue por bairro em uma cidade.
+- 💸 Renda per capita por setor censitário.
+- 🌽 Produtividade agrícola por microrregião.
+- 🏫 Taxa de evasão escolar por município.
+- 🚔 Taxa de criminalidade por distrito policial.
+- 📦 Volume de vendas por zona de entrega.
+:::
 
 ## Mapa Temático
 
-* Taxas de câncer de pulmão na população branca masculina nos Estados Unidos, por condados no ano de 1998
+* O mapa temático tem como principal objetivo visualizar e analisar a distribuição espacial de um fenômeno específico.
+
+* O mapa temático abaixo mostra a frequência de artigos científicos selecionados na revisão integrativa sobre diagnóstico microbiológico de Salmonella spp. na aquicultura entre 2000 e 2020 por países de diferentes continentes. Fonte: Porto et al. 2023.
 
 ```{r echo=F, fig.align="center", out.width="70%"}
-knitr::include_graphics('figuras/area1_2019.png')
+knitr::include_graphics('figuras/tese_yuri.png')
 ```
+
 
 ## Matriz de Vizinhança
 
-```{r echo=F, fig.align="center", out.width="55%"}
+- A **matriz de vizinhança** \( W \) é uma matriz quadrada de dimensão \( n \times n \), onde cada elemento \( w_{ij} \) representa uma **medida de proximidade ou conectividade espacial** entre duas regiões \( O_i \) e \( O_j \).
+
+- Essa matriz é fundamental na análise espacial, pois define **quais áreas são consideradas vizinhas** e como essa vizinhança influencia os fenômenos observados.
+
+```{r echo=F, fig.align="center", out.width="80%"}
 knitr::include_graphics('figuras/vizinhanca.png')
 ```
 
+- A matriz \( W \) pode ser **binária** (0 ou 1) ou **ponderada**, dependendo do critério adotado.
+
+::: box-dica4
+
+📌 Critérios comuns para definir vizinhança:
+
+- \( w_{ij} = 1 \), se \( O_i \) **toca** \( O_j \) (ou seja, compartilham uma fronteira comum). Esse também é chamado de critério de **contiguidade**.
+
+- \( w_{ij} = 1 \), se a **distância entre os centróides** das regiões \( O_i \) e \( O_j \) for **menor que um limite \( h \)**. Esse é o critério baseado em **distância geográfica**.
+
+- \( w_{ij} = \frac{l_{ij}}{l_i} \), onde:
+
+  - \( l_{ij} \): comprimento da fronteira compartilhada entre \( O_i \) e \( O_j \)
+  
+  - \( l_i \): perímetro total da região \( O_i \) 
+  
+  Esse critério expressa a **proporção da fronteira** de \( O_i \) que está em contato com \( O_j \), e é útil para análises mais refinadas de conectividade.
+
+:::
+
+
+
 ## Moran Global, Moran Local e Lisa Map
 
-```{r echo=F, fig.align="center", out.width="20%", fig.cap="Moran Global"}
-knitr::include_graphics('figuras/moran_global.png')
-```
+### 🧮 Moran Global
 
-```{r echo=F, fig.align="center", out.width="30%", fig.cap="Moran Local"}
-knitr::include_graphics('figuras/moran_local.png')
-```
+* Mede a autocorrelação espacial global, ou seja, se valores semelhantes estão agrupados no espaço.
 
-* Desigualdade no nível distrital na cobertura de saúde reprodutiva, materna, neonatal e infantil na Índia
+
+$$I = \frac{ \sum_{i=1}^{n} \sum_{j=1}^{n} w_{ij} (y_i - \bar{y})(y_j - \bar{y}) }{ \sum_{i=1}^{n} (y_i - \bar{y})^2 }$$
+
+::: box-dica4
+
+* $I > 0$: valores similares estão próximos (agrupamento positivo).
+
+* $I < 0$: valores diferentes estão próximos (dispersão).
+
+* $I \approx 0$: padrão aleatório.
+
+:::
+
+Sabendo que:
+
+- \( I \): valor do índice de Moran global.
+- \( n \): número total de unidades espaciais (regiões).
+- \( y_i \): valor da variável de interesse na região \( i \).
+- \( \bar{y} \): média dos valores de \( y \) em todas as regiões.
+- \( w_{ij} \): elemento da matriz de vizinhança que representa a relação espacial entre as regiões \( i \) e \( j \).
+  - \( w_{ij} = 1 \) se \( i \) e \( j \) são vizinhos, 0 caso contrário (ou ponderado).
+- O numerador mede a covariância espacial ponderada, e o denominador é a variância total de \( y \).
+
+### 🧮 Moran Local (LISA)
+
+* Avalia a autocorrelação espacial **local**, permitindo identificar regiões com agrupamentos (clusters) ou comportamentos atípicos.
+
+$$I^{(i)} = \frac{n}{\sum_{j=1}^{n} (z_j - \bar{z})^2} \sum_{j=1}^{n} w_{ij} (z_i - \bar{z})(z_j - \bar{z})$$
+
+Sabendo que:
+
+- \( I^{(i)} \): índice de Moran local para a região \( i \).
+- \( n \): número total de regiões.
+- \( z_i \): valor padronizado (ou original, dependendo da convenção) da variável na região \( i \).
+- \( \bar{z} \): média da variável \( z \).
+- \( w_{ij} \): peso espacial entre as regiões \( i \) e \( j \).
+- A soma considera a influência dos vizinhos \( j \) sobre o ponto \( i \), ponderada pela matriz de vizinhança.
+
+::: box-dica2
+
+🗺️ Resumindo
+
+- **Moran Global** indica se há padrão geral de autocorrelação espacial (positivo, negativo ou aleatório).
+
+- **Moran Local** revela **onde** esses padrões ocorrem: clusters de alto/alto (*hotspots*), baixo/baixo (*coldspots*), alto/baixo (*outliers*), etc.
+
+:::
+<!-- ```{r echo=F, fig.align="center", out.width="20%", fig.cap="Moran Global"} -->
+<!-- knitr::include_graphics('figuras/moran_global.png') -->
+<!-- ``` -->
+
+<!-- ```{r echo=F, fig.align="center", out.width="30%", fig.cap="Moran Local"} -->
+<!-- knitr::include_graphics('figuras/moran_local.png') -->
+<!-- ``` -->
+
+
+### 🗺️ LISA Map
+
+O LISA Map é um mapa temático que representa graficamente os resultados do Índice de Moran Local. Ele identifica:
+
+- Clustering local (agrupamento de valores semelhantes)
+
+- Outliers espaciais (valores discrepantes em relação aos vizinhos)
+
+- Regiões não significativas (sem padrão espacial detectável)
+
+
+| Tipo de Associação        | Descrição                                                | Interpretação Espacial                                                |
+| ------------------------- | -------------------------------------------------------- | --------------------------------------------------------------------- |
+| 🔴 **Alto-Alto (High-High)** | Valor alto cercado por vizinhos também com valores altos | Indica **cluster de altas magnitudes**, também chamado de **hotspot** |
+| 🔵 **Baixo-Baixo (Low-Low)** | Valor baixo cercado por vizinhos com valores baixos      | Indica **cluster de baixas magnitudes**, ou **coldspot**              |
+| 🟠 **Alto-Baixo (High-Low)** | Valor alto cercado por valores baixos                    | Indica um **outlier espacial positivo**                               |
+| 🟡 **Baixo-Alto (Low-High)** | Valor baixo cercado por valores altos                    | Indica um **outlier espacial negativo**                               |
+| ⚪ **Não significativo**     | Sem associação espacial relevante                        | O valor na região não apresenta padrão espacial detectável            |
+
+
+Os valores do Moran Local são testados por permutação para verificar se o padrão observado é estatisticamente significativo ou poderia ocorrer por acaso.
+
+Apenas as regiões significativas (p-valor < 0.05) costumam ser coloridas nos mapas.
+
+<!-- * Desigualdade no nível distrital na cobertura de saúde reprodutiva, materna, neonatal e infantil na Índia -->
+
+<!-- ```{r echo=F, fig.align="center", out.width="90%"} -->
+<!-- knitr::include_graphics('figuras/moran_local2.png') -->
+<!-- ``` -->
+
+<!-- [Fonte: PANDA, Basant Kumar; KUMAR, Gulshan; AWASTHI, Ashish. District level inequality in reproductive, maternal, neonatal and child health coverage in India. BMC public health, v. 20, n. 1, p. 1-10, 2020.](https://bmcpublichealth.biomedcentral.com/articles/10.1186/s12889-020-8151-9) -->
+
+Esse mapa abaixo pertence ao artigo ["Are regions equal in adversity? A spatial analysis of the spread and dynamics of COVID-19 in Europe", de Amdaoud, Arcuri e Levratto (2021)](https://www.researchgate.net/publication/349729379_Are_regions_equal_in_adversity_A_spatial_analysis_of_the_spread_and_dynamics_of_COVID-19_in_Europe). O artigo realiza uma análise espacial detalhada da mortalidade por COVID-19 em 125 regiões europeias durante a primeira onda da pandemia (março a maio de 2020). 
 
 ```{r echo=F, fig.align="center", out.width="90%"}
-knitr::include_graphics('figuras/moran_local2.png')
+knitr::include_graphics('figuras/lisa_map_covid.png')
 ```
 
-[Fonte: PANDA, Basant Kumar; KUMAR, Gulshan; AWASTHI, Ashish. District level inequality in reproductive, maternal, neonatal and child health coverage in India. BMC public health, v. 20, n. 1, p. 1-10, 2020.](https://bmcpublichealth.biomedcentral.com/articles/10.1186/s12889-020-8151-9)
+Utilizando o índice de Moran Local (LISA), o estudo identifica padrões de autocorrelação espacial na mortalidade por COVID-19 entre as regiões europeias durante a primeira onda da pandemia. O resultado evidencia clusters espaciais significativos, com destaque para regiões High-High (altas taxas de mortalidade cercadas por outras com altas taxas), como o norte da Itália, Madrid e a região da Alsácia, na França. Ao mesmo tempo, regiões Low-Low, como o sul da Itália, Dinamarca e partes da Alemanha Oriental, apresentaram baixa mortalidade em vizinhança igualmente baixa. Esses padrões persistentes ao longo do tempo indicam que a disseminação da pandemia seguiu lógicas regionais, reforçando a importância de políticas públicas que considerem as desigualdades territoriais na resposta à crise sanitária.
 
 ## Modelos de Regressão Espacial
 
