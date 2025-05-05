@@ -6,8 +6,8 @@ author: |
 date: "2025"
 output:
   rmdformats::robobook:
-    highlight: kate
     css: style.css
+    highlight: kate
 ---
 
 ```{r setup, include=FALSE}
@@ -512,7 +512,7 @@ Apenas as regiões significativas (p-valor < 0.05) costumam ser coloridas nos ma
 
 Esse mapa abaixo pertence ao artigo ["Are regions equal in adversity? A spatial analysis of the spread and dynamics of COVID-19 in Europe", de Amdaoud, Arcuri e Levratto (2021)](https://www.researchgate.net/publication/349729379_Are_regions_equal_in_adversity_A_spatial_analysis_of_the_spread_and_dynamics_of_COVID-19_in_Europe). O artigo realiza uma análise espacial detalhada da mortalidade por COVID-19 em 125 regiões europeias durante a primeira onda da pandemia (março a maio de 2020). 
 
-```{r echo=F, fig.align="center", out.width="90%"}
+```{r echo=F, fig.align="center", out.width="80%"}
 knitr::include_graphics('figuras/lisa_map_covid.png')
 ```
 
@@ -520,26 +520,92 @@ Utilizando o índice de Moran Local (LISA), o estudo identifica padrões de auto
 
 ## Modelos de Regressão Espacial
 
-* `r colFmt(" Hipótese de independência das observações em geral é Falsa ",'orange')` $\rightarrow$ Dependência Espacial
+* `r colFmt(" Hipótese de independência das observações em geral é Falsa ",'orange')` $\rightarrow$  Existe dependência espacial, ou seja, o valor observado em uma localização tende a se parecer com os valores observados em locais vizinhos.
 
-* Efeitos Espaciais $\rightarrow$ Se existir forte tendência ou correlação espacial, os resultados serão influenciados, apresentando associação estatística onde não existe (e vice-versa);
+* Efeitos Espaciais $\rightarrow$ Se existir dependência ou correlação espacial significativa, devemos incluir no modelo os `r colFmt(" Efeitos Espaciais ",'darkpurple')`, caso contrário, as estimativas geradas pelo modelo de regressão podem ficar enviesadas, criando associações espúrias (isto é, sugerindo relações estatísticas onde elas não existem de fato, ou mascarando relações reais);
 
-* `r colFmt("**Como verificar ?** ",'darkred')` $\rightarrow$ Medir a autocorrelação espacial dos resíduos da regressão (Índice de Moran dos resíduos).
+* `r colFmt("**Como verificar ?** ",'darkred')` $\rightarrow$ Para detectar a dependência espacial, podemos analisar os resíduos da regressão tradicional (OLS), utilizando indicadores como o índice de Moran dos resíduos. Se os resíduos mostrarem autocorrelação espacial significativa, isso indica que há estrutura espacial não modelada.
 
-* Autocorrelação espacial constatada ! E agora ? $\rightarrow$ Utilizar Modelos de regressão que incorporam efeitos espaciais:
+* `r colFmt("**Detectada a autocorrelação espacial: e agora ?** ",'darkblue')` $\rightarrow$  É necessário adotar modelos de regressão que incorporem explicitamente os efeitos espaciais, evitando vieses nas estimativas dos coeficientes.
 
-    i) **Modelos Globais:** utilizam um único parâmetro para capturar a estrutura de correlação espacial $\rightarrow$ ex: *Spatial Error Models (CAR)*
+
+### i) Modelos Globais: 
+
+* Esses modelos assumem que a estrutura espacial é constante em todo o espaço geográfico. Utilizam um único parâmetro para captar a autocorrelação.
+
+* Um exemplo é o **Modelo de Erro Espacial** (*Spatial Error Model* - **CAR**), representado por:
     
 $$y_i = \beta_0 + \sum^{p}_{k} \beta_k x_{ik}  + \varepsilon_i \text{    , sendo  }  \varepsilon_i = \lambda  W + \xi$$
 
-  * Os efeitos da autocorrelação espacial são associados ao termo de erro. Sendo  $W$ a matriz de vizinhaça, $\varepsilon$ a componente do erro com efeitos espaciais, $λ$ é o coeficiente autoregressivo e $\xi$ é a componente do erro com variância constante e não
-correlacionada. 
+::: box-dica4
+Sendo:
 
-  * A hipótese nula para a não existência de autocorrelação é que $\lambda = 0$, ou seja, o termo de erro não é espacialmente correlacionado. 
+- $y_i$: valor observado da variável dependente na unidade $i$;
 
-    ii) **Modelos Locais:** parâmetros variam continuamente no espaço ex: *Geographically Weighted Regression (GWR)*
+- $\beta_0$: intercepto da regressão;
+
+- $\beta_k$: coeficiente da $k$-ésima variável explicativa;
+
+- $x_{ik}$: valor da $k$-ésima variável explicativa para a unidade $i$;
+
+- $\varepsilon_i$: erro com estrutura de autocorrelação espacial;
+
+
+- $\lambda$: coeficiente de autocorrelação espacial;
+
+- $W$: matriz de vizinhança espacial (define como cada unidade está conectada às outras);
+
+- $\xi$: erro aleatório normal (sem autocorrelação), com $\mathbb{E}[\xi]()
+:::
+
+$\rightarrow$ Podemos observar que os efeitos da autocorrelação espacial são associados ao termo de erro.
+
+::: box-dica2
+
+🧠 Interpretação:
+
+- Se $\lambda \ne 0$, há evidência de dependência espacial nos erros, ou seja, o erro em uma localidade está correlacionado com os erros em localidades vizinhas.
+
+- Se $\lambda = 0$, o modelo reduz-se a uma regressão tradicional, e não há autocorrelação espacial significativa.
+:::
+
+
+
+### ii) Modelos Locais: 
+
+* Enquanto os modelos globais assumem uma relação espacial uniforme, os modelos locais admitem que os parâmetros da regressão variam ao longo do espaço geográfico.
+
+* Um exemplo clássico é o Modelo **Geograficamente Ponderado** (*Geographically Weighted Regression* - **GWR**), expresso por:
+  
     
-$$y_i = \beta_{0}(u_i, v_i) + \sum^{p}_{k}  \beta_k (u_i, v_i) x_{ik} + \varepsilon_i \text{    , sendo  } (u_i, v_i) \text{    as coordenadas geográficas}$$
+<!-- $$y_i = \beta_{0}(u_i, v_i) + \sum^{p}_{k}  \beta_k (u_i, v_i) x_{ik} + \varepsilon_i \text{    , sendo  } (u_i, v_i) \text{    as coordenadas geográficas}$$ -->
+
+<!-- Onde: -->
+
+<!-- - $(u_i, v_i)$ representam as \textbf{coordenadas geográficas} da observação $i$; -->
+<!-- - Os coeficientes $\beta_k(u_i, v_i)$ são estimados \textbf{localmente}, variando de acordo com a posição no espaço. -->
+
+
+\[
+y_i = \beta_{0}(u_i, v_i) + \sum_{k=1}^{p} \beta_k(u_i, v_i) \cdot x_{ik} + \varepsilon_i,
+\\
+\quad \text{com } \beta_k(u_i, v_i) \text{ estimado via } 
+\sum_{j=1}^{n} K(d_{ij}) \cdot x_{jk}
+\]
+
+::: box-dica4
+
+Onde:
+
+- $(u_i, v_i)$: coordenadas geográficas da observação $i$;
+
+- $\beta_k(u_i, v_i)$: coeficiente local da variável explicativa $x_k$, estimado para a posição $i$;
+
+- $K(d_{ij})$: função kernel que atribui um peso à observação $j$ com base na distância $d_{ij}$ entre as localizações $i$ e $j$;
+:::
+
+$\rightarrow$ Quanto menor $d_{ij}$, maior é o peso de $j$ na estimação de $\beta_k(u_i, v_i)$.
+  
 [Fonte: ARDILLY, Pascal et al. Manuel d’analyse spatiale. 2018.](https://ec.europa.eu/eurostat/documents/3859598/9462709/INSEE-ESTAT-SPATIAL-ANA-18-EN.pdf)
 
 <!-- ## Como trabalhar com Análise Estatística Espacial: Algumas ferramentas -->
