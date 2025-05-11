@@ -20,6 +20,7 @@ stringr
 forcats
 lubridate
 spatstat.data
+spatstat.univar
 spatstat.geom
 spatstat.random
 nlme
@@ -44,4 +45,3 @@ gstat
 lattice
 automap
 raster
-spatstat.univar

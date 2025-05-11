@@ -377,7 +377,7 @@ O objetivo da análise de dados de área é identificar, explicar e interpretar 
 
 * O mapa temático tem como principal objetivo visualizar e analisar a distribuição espacial de um fenômeno específico.
 
-* O mapa temático abaixo mostra a frequência de artigos científicos selecionados na revisão integrativa sobre diagnóstico microbiológico de Salmonella spp. na aquicultura entre 2000 e 2020 por países de diferentes continentes. Fonte: Porto et al. 2023.
+* O mapa temático abaixo mostra a frequência de artigos científicos selecionados na revisão integrativa sobre diagnóstico microbiológico de Salmonella spp. na aquicultura entre 2000 e 2020 por países de diferentes continentes. Fonte: Porto et al. 2023 ([link](https://tede.ufrrj.br/jspui/bitstream/jspui/6673/2/2023%20-%20Yuri%20Duarte%20Porto%20%28parcialmente%20liberada%29.pdf)).
 
 ```{r echo=F, fig.align="center", out.width="70%"}
 knitr::include_graphics('figuras/tese_yuri.png')
@@ -648,18 +648,31 @@ $\rightarrow$ Quanto menor $d_{ij}$, maior é o peso de $j$ na estimação de $\
 
 <!-- [Clique aqui para baixar os dados das aplicações](https://drive.google.com/drive/folders/10WMJYlwHcEX9zw3_RUjDQz5DGZByiI2N?usp=sharing) -->
 
-# **Aplicação I:** Utilizando a biblioteca *tmap* para construção de mapas temáticos
+# **Aplicação I:** Utilizando a biblioteca *tmap* para construção rápida de mapas temáticos
 
 ```{r, echo=T, out.width='90%'}
 library(tmap)
+
+# Carrega dados espaciais do mundo com variáveis socioeconômicas
 data(World)
+
+# Define o estilo do mapa (opcional, apenas visual)
 tmap_style("classic")
-# Desenhando um rápido mapa temático mundial para esperança de vida.
-qtm(World, fill = "life_exp")
+
+# Cria um mapa temático utilizando a variável esperança de vida
+qtm(World, fill = "life_exp", 
+    title = "Esperança de Vida por País",
+    fill.title = "Anos",
+    borders = "gray40")
+
 ```
 
-# **Aplicação II:** Baixando e construindo mapas a partir da biblioteca *geobr*
+<!-- ## Exercício proposto: -->
 
+<!-- Altere o script para representar outra variável (por exemplo, taxa de alfabetização, população, ou área). O que muda na interpretação do mapa ? Quais países se destacam em cada caso ? -->
+
+
+# **Aplicação II:** Baixando e construindo mapas a partir da biblioteca *geobr*
 
 ### Bibliotecas que serão utilizadas:
 
@@ -675,7 +688,7 @@ library(ggspatial)
 
 ```
 
-* Para acessar os dados dos limites territoriais de todos os estados brasileiros é necessário utilizar a função *read_state*.
+Para acessar os dados dos limites territoriais de todos os estados brasileiros é necessário utilizar a função *read_state*.
 
 ```{r, echo=T}
 brasil.ufs <- read_state(code_state = "all", year=2019, showProgress = FALSE)
@@ -688,97 +701,122 @@ ggplot(brasil.ufs) +
   geom_sf()
 ```
 
-* Para a construção de um mapa onde cada estado recebe uma cor de acordo com a sua região geogrática, procedemos da seguinte forma: 
-
-```{r, echo=T,  out.width="70%"}
+Para a construção de um mapa onde cada estado recebe uma cor de acordo com a sua região geogrática, procedemos da seguinte forma: 
+  
+```{r, echo=T,  out.width="90%"}
 ggplot(brasil.ufs) + 
   geom_sf(aes(fill = name_region)) + 
   labs(fill="Região")
 ```
 
-* Agora utilizaremos dados relativos a porcentagem de municípios com rede de esgoto de acordo com a unidade da federação ([fonte dos dados](https://pt.wikipedia.org/wiki/Lista_de_unidades_federativas_do_Brasil_por_acesso_%C3%A0_rede_de_esgoto) ) para fazer um gráfico. Vamos associar esses dados a tabela de acordo com a variável State e padronizaremos a porcentagem para variar de 0 a 100.
+Para plotar o mapa, agora utilizaremos dados relativos ao acesso à rede de esgoto de acordo com a unidade da federação ([fonte dos dados](https://pt.wikipedia.org/wiki/Lista_de_unidades_federativas_do_Brasil_por_acesso_%C3%A0_rede_de_esgoto) ) segundo o censo de 2022. Vamos associar esses dados a tabela de acordo com a variável State e padronizaremos a porcentagem para variar de 0 a 100.
 
 
-```{r, echo=T,  out.width="70%"}
+```{r, echo=T,  out.width="90%"}
 # Entrando com os dados observados na wikipedia
-acesso_san <- data.frame(code_state = c(12, 27, 16, 13, 29, 23, 53, 32, 52, 21, 51, 50, 31, 15, 
-                                   25, 41, 26, 22, 33, 24, 43, 11, 14, 42, 35, 28, 17), 
-                         com_rede = c(0.273, 0.412, 0.313, 0.177, 0.513, 0.696, 1.000, 0.974, 0.280, 0.065, 
-                                      0.191, 0.449, 0.916, 0.063, 0.731, 0.421, 0.881, 0.045, 0.924, 0.353, 
-                                      0.405, 0.096, 0.400, 0.352, 0.998, 0.347, 0.129))
+acesso_esgoto <- data.frame(
+  sigla = c("SP", "DF", "RJ", "MG", "ES",
+            "PR", "RS", "PE", "GO", "SC",
+            "BA", "MS", "RR", "CE", "SE",
+            "PB", "AC", "AM", "AL", "TO",
+            "MT", "RN", "PI", "PA", "RO",
+            "AP", "MA"),
+  
+  rede_esgoto = c(93.6, 89.9, 88.9, 81.4, 78.2,
+                  73.7, 71.0, 65.1, 61.7, 61.4,
+                  59.5, 57.2, 56.0, 52.8, 51.0,
+                  49.9, 47.7, 47.0, 40.6, 39.8,
+                  37.4, 35.8, 26.8, 23.5, 21.7,
+                  20.7, 18.1)
+)
+
+```
+
+
+
+```{r, echo=T,  out.width="90%"}
+# Unindo os dados com o shapefile
+
+brasil.ufs <- brasil.ufs %>%
+  left_join(acesso_esgoto, by = c("abbrev_state" = "sigla"))
+
+
 ```
 
 <center>
 
-```{r, echo=T,  out.width="80%"}
+  
+```{r, echo=T,  out.width="90%"}
 # Construindo o mapa com ggplot
-brasil.ufs |> 
-  left_join(acesso_san, by = "code_state") |> 
-  mutate(com_rede = 100*com_rede) |> 
-  ggplot(aes(fill = com_rede), color = "black") +
-    geom_sf() + 
-    scale_fill_viridis(name = "Municípios com rede de esgoto (%)", direction = -1) + 
-  xlab("Longitude") + 
-  ylab("Latitude") +
-  annotation_scale(location = "bl") +
-  annotation_north_arrow(location = "br") +
-    theme_minimal()
-```
-
-</center>
-
-* Uma forma alteranativa de apresentar esses mesmos dados se dá pela apresentação de círculos com raios proporcionais a porcentgem de municípios com rede de esgoto no centroide de cada geometria (nesse caso, UF).
-
-
-
-```{r, echo=T,  out.width="80%"}
-# Juntando o banco com os dados + malha
-coord_pontos <- brasil.ufs |> 
-                  left_join(acesso_san, by = "code_state") |> 
-                  mutate(com_rede = 100*com_rede) |> 
-                  st_centroid()
-```
-
-<center>
-
-```{r, echo=T,  out.width="80%"}
-# Construindo o mapa com ggplot
-ggplot(brasil.ufs)+ 
+brasil.ufs |>
+  ggplot(aes(fill = rede_esgoto), color = "black") + 
   geom_sf() + 
-  geom_sf(data = coord_pontos, aes(size = com_rede), col = "blue", alpha = .65,
-          show.legend = "point") + 
-  scale_size_continuous(name = "Municípios com rede de esgoto (%)") + 
-  xlab("Longitude") + 
-  ylab("Latitude") +
-  annotation_scale(location = "bl") +
-  annotation_north_arrow(location = "br") +
-    theme_minimal()
+  scale_fill_viridis(name = "Municípios com rede de esgoto (%)", direction = -1) + 
+  xlab("Longitude") + ylab("Latitude") + annotation_scale(location = "bl") +
+  annotation_north_arrow(location = "br") + 
+  theme_minimal()
 ```
 
 </center>
+  
+Uma forma alteranativa de apresentar esses mesmos dados se dá pela apresentação de círculos com raios proporcionais a porcentgem de municípios com rede de esgoto no centroide de cada geometria (nesse caso, UF).
 
-* Uma alternativa interativa para trabalhar com mapas é com a utilização do pacote *leaflet*
+```{r, echo=T,  out.width="80%"}
+# Calcula o centroide de cada estado no objeto espacial brasil.ufs.
+coord_pontos <- brasil.ufs |>  
+  st_centroid()
+```
 
+<center>
+
+ 
+```{r, echo=T,  out.width="90%"}
+# Construindo o mapa com ggplot
+ggplot(brasil.ufs) + 
+  geom_sf() + 
+  geom_sf(data = coord_pontos, aes(size = rede_esgoto), col = "blue", 
+          alpha = .65, show.legend = "point") +
+    scale_size_continuous(name = "Municípios com rede de esgoto (%)") + 
+    xlab("Longitude") + 
+    ylab("Latitude") +
+    annotation_scale(location = "bl") +
+    annotation_north_arrow(location = "br") +
+  theme_minimal()
+```
+
+
+</center>
+
+
+Uma alternativa interativa para trabalhar com mapas é com a utilização do pacote *leaflet*
+  
 <center>
 
 ```{r, echo=T,  out.width="70%"}
-data.frame(st_coordinates(coord_pontos), 
-           com_rede = coord_pontos$com_rede, 
-           UF = coord_pontos$name_state) |>
-  leaflet() |> 
-    addTiles() |>
-    addCircleMarkers(~ X, ~ Y,
-                     label = ~ as.character(paste0(UF, ": ", com_rede, "%")),
-                     labelOptions = labelOptions(textsize = "13px"),
-                     radius = ~ com_rede/10,
-                     fillOpacity = 0.5)
+leaflet(coord_pontos) |>
+  # Camada tradicional com nomes e divisões políticas
+  addProviderTiles(providers$OpenStreetMap, group = "Mapa Político") |>
+  # Camada de imagem de satélite
+  addProviderTiles(providers$Esri.WorldImagery, group = "Satélite") |>
+  # Adiciona os círculos nos centroides
+  addCircleMarkers(
+    label = ~ paste0(abbrev_state, ": ", rede_esgoto, "%"), # Rótulo exibido ao passar o mouse
+    labelOptions = labelOptions(textsize = "13px"), # Tamanho da fonte do rótulo
+    radius = ~ rede_esgoto / 10,              # Raio do círculo proporcional
+    fillOpacity = 0.5,                       # Transparência dos círculos
+    group = "Dados"
+  ) |>
+  # Adiciona controle para alternar entre as camadas de fundo
+  addLayersControl(
+    baseGroups = c("Mapa Político", "Satélite"),
+    overlayGroups = "Dados",
+    options = layersControlOptions(collapsed = FALSE)
+  )
 
-```
+```  
+  
 </center>
-
-[Créditos ao Thiago Mendonça](https://www.tiagoms.com/post/mapa/)
-
-
+  
 ---
 
 # **Aplicação III:** Dengue em Dourados/MS - Parte 1: Análise exploratória
@@ -788,7 +826,7 @@ data.frame(st_coordinates(coord_pontos),
 
 * Essa aplicação também se encontra no [Curso de Estudos Ecológicos](https://ogcruz.github.io/) ministrado para o curso de [Pós-Graduação em Epidemiologia em Saúde Pública](http://ensino.ensp.fiocruz.br/cursos/mestrado-e-doutorado/epidemiologia-em-saude-publica) em 2019, pelos pesquisadores [Oswaldo Gonçalves Cruz (PROCC/FIOCRUZ)](https://lsbastos.github.io/PROCC/membro-9530671289607786.html) e [Wagner Tassinari (DEMAT/ICE/UFRRJ)](https://institucional.ufrrj.br/ruralpesquisa/wagner-de-souza-tassinari/)
 
- **OBS:** Os dados e as malhas geográficas utilizadas nessa apresentação, estão disponíveis no seguinte endereço: ([link](https://github.com/wtassinari/espacial2021))
+ **OBS:** Os dados e as malhas geográficas utilizadas nessa apresentação, estão disponíveis no seguinte endereço: ([link](https://github.com/wtassinari/Estatistica_Espacial/tree/main/dados))
 
 
 ### Biliotecas do R que serão utilizadas
