@@ -821,8 +821,9 @@ leaflet(coord_pontos) |>
 
 # **Aplicação III:** Dengue em Dourados/MS - Parte 1: Análise exploratória
 
-* Nesta apresentação serão utilizados os dados que fizeram parte da dissertação de [Isis Rodrigues Reitman](https://sucupira.capes.gov.br/sucupira/public/consultas/coleta/trabalhoConclusao/viewTrabalhoConclusao.jsf?popup=true&id_trabalho=3666174) intitulada *“SAÚDE E AMBIENTE URBANO: A RELAÇÃO DE INCIDÊNCIA DE DENGUE E AS DISPARIDADES ESPACIAIS EM DOURADOS – MS"*, apresentada no [Programa de Pós-Graduação em Geografia da Universidade Federal da Grande Douradosos/MS](https://portal.ufgd.edu.br/pos-graduacao/mestrado-doutorado-geografia/index), em abril de 2016. 
+* Nesta apresentação, serão utilizados dados com ruído espacial, com o objetivo de preservar a confidencialidade das informações originais. Esses dados fazem parte da dissertação de [Isis Rodrigues Reitman](https://sucupira.capes.gov.br/sucupira/public/consultas/coleta/trabalhoConclusao/viewTrabalhoConclusao.jsf?popup=true&id_trabalho=3666174), intitulada *“Saúde e Ambiente Urbano: a relação de incidência de dengue e as disparidades espaciais em Dourados – MS”*, apresentada em abril de 2016 no [Programa de Pós-Graduação em Geografia da Universidade Federal da Grande Dourados (UFGD)](https://portal.ufgd.edu.br/pos-graduacao/mestrado-doutorado-geografia/index).
 
+* Os ruídos nas coordenadas foram gerados a partir de uma distribuição uniforme, utilizando a função `runif(nrow(casos), -15, 15)`, que produz valores aleatórios entre -15 e 15 para cada linha do conjunto de dados. Esse procedimento simula um deslocamento máximo de até 15 metros em cada direção, o que é suficiente para preservar o padrão espacial geral dos casos, ao mesmo tempo em que evita a identificação precisa das localizações originais.
 
 * Essa aplicação também se encontra no [Curso de Estudos Ecológicos](https://ogcruz.github.io/) ministrado para o curso de [Pós-Graduação em Epidemiologia em Saúde Pública](http://ensino.ensp.fiocruz.br/cursos/mestrado-e-doutorado/epidemiologia-em-saude-publica) em 2019, pelos pesquisadores [Oswaldo Gonçalves Cruz (PROCC/FIOCRUZ)](https://lsbastos.github.io/PROCC/membro-9530671289607786.html) e [Wagner Tassinari (DEMAT/ICE/UFRRJ)](https://institucional.ufrrj.br/ruralpesquisa/wagner-de-souza-tassinari/)
 
@@ -851,20 +852,28 @@ contorno.sf <- read_sf('dados/dengue_dourados/contorno.shp', crs = 31981)
 
 ```
 
-**OBS:** Um aspecto muito importante dos dados espaciais é o sistema de referência de coordenadas (CRS) que é usado. Por exemplo, uma localização de (140, 12) não é significativa se você sabe onde está a origem e se a coordenada x está a 140 metros, quilômetros ou talvez graus de distância dela (na direção x). ([link](https://rspatial.org/raster/spatial/6-crs.html))
+📌 O que é CRS (Coordinate Reference System) ?
+
+O CRS é como uma “regra de tradução” entre o que está em um mapa e o mundo real. Ele define como as coordenadas (como 140, 12) se relacionam com locais verdadeiros na Terra, dizendo se os valores estão em metros, graus ou outra unidade, e onde fica o ponto de partida (a origem). Sem um CRS, uma coordenada não tem significado, pois não sabemos onde ela realmente está nem em que escala.
+
+🗺️ Por que isso é importante ?
+
+Se dois mapas tiverem CRSs diferentes, os pontos não vão se alinhar corretamente — como tentar juntar peças de quebra-cabeça de caixas diferentes. Usar o CRS certo garante que todas as informações espaciais estejam bem posicionadas e coerentes. Por exemplo, o WGS 84 é usado por GPS e Google Maps (em graus), enquanto o UTM é usado para mapas locais mais precisos (em metros). Saber isso evita erros em análises espaciais e garante que os dados “conversem” entre si.
+
+**OBS:** Se quiser saber um pouco mais a respeito do CRS, basta acessar ([link](https://rspatial.org/raster/spatial/6-crs.html))
 
 
 ### Fazendo um join com as tabelas com os setores censitários + população
 
 ```{r, echo=T}
-setor.sf <- setor.sf %>% mutate (idsetor = as.numeric(CD_GEOCODI)) %>% inner_join(pop2010, by='idsetor')
+setor.sf <- setor.sf |> mutate (idsetor = as.numeric(CD_GEOCODI)) |> inner_join(pop2010, by='idsetor')
 ```
 
 ### Lendo e plotando os casos de dengue georreferenciados em Dourados/MS
 
 ```{r, echo=T}
 casos <- read_csv('dados/dengue_dourados/dengue_dourados.csv')
-casos.sf <- st_as_sf(casos, coords = c("X", "Y"), crs = 31981)
+casos.sf <- st_as_sf(casos, coords = c("X", "Y"), crs = 31981) 
 ```
 
 ```{r, echo=T, out.width="60%"}
@@ -888,9 +897,9 @@ ggplot(setor.sf) +
   theme_void()
 ```
 
-- Como podemos observar, existem alguns pontos de coleta de lixo fora do contorno de Dourados/MS
+* Como podemos observar, existem alguns pontos de coleta de lixo fora do contorno de Dourados/MS
 
-### Uma forma de ficarmos só com os pontos dentro do polígono é utilizando o comando st_intersection.
+### Uma forma de ficarmos só com os pontos dentro do polígono é utilizando o comando `st_intersection`.
 
 
 ```{r, echo=T}
@@ -907,71 +916,90 @@ ggplot(setor.sf) +
 ### Utilizando as informações dos casos (pontos) + do lixo (ponto) + população de cada setor censitário (mapa temático)
 
 ```{r, echo=T,  out.width="70%"}
+# Adiciona categorias para legenda
+lixo$tipo <- "Lixo"
+casos.sf$tipo <- "Caso"
+
 ggplot(setor.sf) + 
   geom_sf(aes(fill=pop)) + 
-  geom_sf(data=casos.sf,color='red',size=0.7, aes(colour = "Caso"), 
+  geom_sf(data = casos.sf, color='red',size = 0.7, aes(colour = "Caso"), 
           show.legend = "point") +
-  geom_sf(data=lixo2.sf,color='salmon',size=1, aes(colour = "Lixo"), 
+  geom_sf(data = lixo2.sf, color = 'salmon', size = 1, aes(colour = "Lixo"), 
           show.legend = "point") +
-  scale_fill_distiller(palette ="PuBu", direction = 1) +
-  scale_colour_manual(values = c("Caso" = "red", "Lixo" = "slamon")) +
+  scale_fill_distiller(palette = "PuBu", direction = 1) +
+  scale_colour_manual(values = c("Caso" = "red", "Lixo" = "salmon")) +
   theme_minimal()
 ```
 ### Construindo os buffers
 
-* Agora serão construidos buffers de 500m de distância ao redor de cada ponto de coleta de lixo. Isso é interessante para verificar se os casos de dengue ocorrem em um raio de até 500m de distância dos pontos de coleta de lixo. Ou seja, a pergunta é, será que a distância dos pontos de coeta de lixo influenciam a ocorrência do caso de dengue ?
+* Serão construídos buffers com raio de 500 metros ao redor de cada ponto de coleta de lixo. Essa abordagem permite analisar se os casos de dengue ocorrem dentro desse perímetro, ou seja, a até 500 metros dos pontos de coleta. O objetivo é investigar se existe uma relação entre a proximidade desses locais e a ocorrência de casos de dengue.
 
 **Buffers:** São polígonos que contornam um objeto a uma determinada distância. Sua principal função é materializar os conceitos de “perto” e “longe”.
 
 ```{r, echo=T,  out.width="70%"}
 lixo_buffer <- st_buffer(lixo2.sf, 500) 
 
+# Adiciona categorias para legenda
+lixo_buffer$tipo <- "Lixo"
+casos.sf$tipo <- "Caso"
+
 ggplot(setor.sf) + 
-  geom_sf(aes(fill=pop)) + 
-  geom_sf(data=lixo_buffer,color='gray', fill = "transparent", size=0.4) +
-  geom_sf(data=casos.sf, color='red',size=0.7) +
-  scale_fill_distiller(palette ="PuBu", direction = 1) +
-  scale_colour_manual(values = c("Caso" = "red", "Lixo" = "slamon")) +
+  geom_sf(aes(fill = pop)) + 
+  geom_sf(data = lixo_buffer, aes(color = tipo), fill = "transparent", size = 0.4) +
+  geom_sf(data = casos.sf, aes(color = tipo), size = 0.7) +
+  scale_fill_distiller(palette = "PuBu", direction = 1) +
+  scale_color_manual(values = c("Caso" = "red", "Lixo" = "gray")) +
   theme_minimal()
+
 ```
 
-### Represntando os casos e o lixo de forma interativa
+### Represntando os casos e o lixo de forma interativa com o a biblioteca `tmap`
 
 ```{r, echo=T,  out.width="90%"}
-tm_shape(setor.sf) +  tm_borders("black") +
-  tm_shape(casos.sf) + tm_dots("red") +
-  tm_shape(lixo.sf) + tm_dots("green") +
-  tm_shape(lixo_buffer) + tm_borders("blue") +
-  tmap_mode("view")
+library(tmap)
+
+
+tmap_mode("view") # modo interativo (Leaflet)
+# tmap_mode("plot") # modo estático (p/ publicação)
+
+# Constrói o mapa
+tm_shape(setor.sf) + tm_borders("black") +
+  tm_shape(casos.sf) + tm_dots(col = "red", palette = "red") +
+  tm_shape(lixo.sf) + tm_dots(col = "green", palette = "green") +
+  tm_shape(lixo_buffer) + tm_borders(col = "blue")
+
 ```
 
 ### Convertendo o dado de pontos (padrão pontual) para dados de área
 
 ```{r, echo=T}
-## conta casos por setor 
-casos.sf$contador <- 1 
-casos <- setor.sf |>  
-  st_join(casos.sf) |> 
-  filter(CLASSI_FIN == 1) %>%  ## seleciona somente os casos confirmados
-  group_by(ID) |> 
-  summarise(casos = sum(contador))
+library(sf)
+library(dplyr)
 
-st_geometry(casos) <- NULL  ## remove atributos de geometria
+# Conta casos confirmados (CLASSI_FIN == 1) por setor
+casos <- casos.sf |>
+  filter(CLASSI_FIN == 1) |>        # Filtra apenas casos confirmados
+  mutate(contador = 1) |>          # Adiciona coluna de contagem
+  st_join(setor.sf, join = st_within) |>  # Une os casos aos setores (dentro do polígono)
+  group_by(ID) |>                 # Agrupa por ID do setor
+  summarise(casos = sum(contador, na.rm = TRUE)) |> # Conta casos por setor
+  st_drop_geometry()  ## remove atributos de geometria
 
-## numero de depositos de Lixo por setor 
-lixo.sf$contador <- 1 
 
-lixo <- setor.sf |>  
-  st_join(lixo.sf) |> 
-  group_by(ID) |> 
-  summarise(lixo = sum(contador))
+# Número de depósitos de lixo por setor (sem geometria)
+lixo <- lixo.sf |>
+  mutate(contador = 1) |>                      # Adiciona coluna de contagem
+  st_join(setor.sf, join = st_within) |>       # Junta pontos aos setores onde estão contidos
+  group_by(ID) |>                              # Agrupa por setor
+  summarise(lixo = sum(contador, na.rm = TRUE)) |>  # Soma os depósitos por setor
+  st_drop_geometry()                           # Remove geometria
 
-st_geometry(lixo) <- NULL ## remove atributos de geometria
 
-# Inserindo as contagens dos casos e de pontos de coleta de lixo no atributo com a geometria.
-setor.sf <- setor.sf |> 
-  left_join(lixo,by = 'ID') |> 
-  left_join(casos,by = 'ID') 
+# Inserindo as contagens de lixo e casos confirmados na geometria dos setores
+setor.sf <- setor.sf |>
+  left_join(lixo, by = "ID") |>    # Junta a contagem de depósitos de lixo por setor
+  left_join(casos, by = "ID")      # Junta a contagem de casos confirmados por setor
+
 ```
 
 
