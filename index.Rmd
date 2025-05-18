@@ -823,7 +823,17 @@ leaflet(coord_pontos) |>
 
 * Nesta apresentação, serão utilizados dados com ruído espacial, com o objetivo de preservar a confidencialidade das informações originais. Esses dados fazem parte da dissertação de [Isis Rodrigues Reitman](https://sucupira.capes.gov.br/sucupira/public/consultas/coleta/trabalhoConclusao/viewTrabalhoConclusao.jsf?popup=true&id_trabalho=3666174), intitulada *“Saúde e Ambiente Urbano: a relação de incidência de dengue e as disparidades espaciais em Dourados – MS”*, apresentada em abril de 2016 no [Programa de Pós-Graduação em Geografia da Universidade Federal da Grande Dourados (UFGD)](https://portal.ufgd.edu.br/pos-graduacao/mestrado-doutorado-geografia/index).
 
-* Os ruídos nas coordenadas foram gerados a partir de uma distribuição uniforme, utilizando a função `runif(nrow(casos), -15, 15)`, que produz valores aleatórios entre -15 e 15 para cada linha do conjunto de dados. Esse procedimento simula um deslocamento máximo de até 15 metros em cada direção, o que é suficiente para preservar o padrão espacial geral dos casos, ao mesmo tempo em que evita a identificação precisa das localizações originais.
+* Os ruídos nas coordenadas foram gerados a partir de uma distribuição uniforme. A função produz valores aleatórios entre -15 e 15 para cada linha do conjunto de dados. Esse procedimento simula um deslocamento máximo de até 15 metros em cada direção, o que é suficiente para preservar o padrão espacial geral dos casos, ao mesmo tempo em que evita a identificação precisa das localizações originais.
+
+```{r, eval=FALSE, echo = TRUE}
+# Supondo que seu dataframe se chame `casos`
+# Adicionando um ruído aleatório pequeno (por exemplo, até ±15 metros) às coordenadas X e Y
+
+set.seed(123)  # Para reprodutibilidade
+casos$X_ruido <- casos$X + runif(nrow(casos), -15, 15)
+casos$Y_ruido <- casos$Y + runif(nrow(casos), -15, 15)
+```
+
 
 * Essa aplicação também se encontra no [Curso de Estudos Ecológicos](https://ogcruz.github.io/) ministrado para o curso de [Pós-Graduação em Epidemiologia em Saúde Pública](http://ensino.ensp.fiocruz.br/cursos/mestrado-e-doutorado/epidemiologia-em-saude-publica) em 2019, pelos pesquisadores [Oswaldo Gonçalves Cruz (PROCC/FIOCRUZ)](https://lsbastos.github.io/PROCC/membro-9530671289607786.html) e [Wagner Tassinari (DEMAT/ICE/UFRRJ)](https://institucional.ufrrj.br/ruralpesquisa/wagner-de-souza-tassinari/)
 
@@ -953,7 +963,7 @@ ggplot(setor.sf) +
 
 ```
 
-### Represntando os casos e o lixo de forma interativa com o a biblioteca `tmap`
+### Representando os casos e o lixo de forma interativa com o a biblioteca `tmap`
 
 ```{r, echo=T,  out.width="90%"}
 library(tmap)
@@ -1047,7 +1057,7 @@ ggplot(setor.sf) +
 dourados.contorno <- st_union(setor.sf)
 plot(dourados.contorno)
 ```
-
+- Agora iremos converter o contorno geográfico da cidade de Dourados (um polígono `sf`) para o formato `owin `da classe `spatstat`, que é usado para análise espacial de padrões de pontos.
 
 ```{r, echo=T,  out.width="70%"}
 dourados.w <- as.owin(st_geometry(dourados.contorno))
@@ -1058,7 +1068,7 @@ dourados.w <- as.owin(st_geometry(dourados.contorno))
 ```{r, echo=T,  out.width="70%"}
 centroides <- st_centroid(st_geometry(setor.sf))
 
-# Transformando em os centróides em formato sp
+# Transformando em os centróides em formato sp (spatstat)
 centroides.sp <- as.data.frame(as_Spatial(centroides))
 names(centroides.sp) <- c('X','Y')
 
@@ -1073,12 +1083,22 @@ centroides.ppp <- ppp(centroides.sp$X,centroides.sp$Y, dourados.w)
 plot(centroides.ppp,pch=19,cex=0.5)
 ```
 
-### Fazendo o kernel por atributo da taxa de detecção
+### Construindo o kernel por atributo da taxa de detecção
 
 ```{r, echo=T,  out.width="70%"}
 kernel.tx <- density(centroides.ppp, 500, weights = setor.sf$tx, scalekernel = TRUE)
 plot(kernel.tx)
 ```
+
+::: box-dica2
+
+- `centroides.ppp`:	Objeto do tipo ppp com os pontos centrais (centroides) dos setores.
+500	Largura de banda (bandwidth), ou seja, o alcance de suavização da função kernel, neste caso 500 metros (ou unidades do sistema).
+
+- `weights = setor.sf$tx`: Peso de cada ponto (setor), neste caso uma variável chamada tx, que provavelmente representa uma taxa (ex: incidência por população).
+
+- `scalekernel = TRUE`:	Faz a função kernel se ajustar automaticamente à soma total dos pesos, preservando a escala da densidade ponderada.
+:::
 
 ### Construindo a matriz de vizinhança para verificar a autocorrelação espacial
 
@@ -1088,8 +1108,17 @@ viz <- poly2nb(setor.sf)
 viz 
 ```
 
+::: box-dica2
 
-* Iremos precisar da coordenadas dos centróides
+- `setor.sf` é um objeto do tipo sf com polígonos (setores).
+
+- `poly2nb()` (polygon to neighbors) calcula quais polígonos são vizinhos, ou seja, compartilham ao menos um lado ou ponto de fronteira (por padrão).
+
+- `viz` é um objeto do tipo nb ("neighbors list") — uma lista onde cada item contém os índices dos setores vizinhos ao setor correspondente.
+
+:::
+
+* Iremos precisar da coordenadas dos centróides para montar a malha de conectividade.
 
 ```{r, echo=T,  out.width="70%"}
 setor.sp <- as(setor.sf, 'Spatial') # convertendo em formato sp
@@ -1099,13 +1128,21 @@ class(setor.sp)
 
 ### Verificando a malha de conectividade da vizinhança de Dourados/MS
 
-```{r, echo=T,  out.width="70%"}
+```{r, echo=T}
 viz.sf <- as(nb2lines(viz, coords = coord), 'sf')
 viz.sf <- st_set_crs(viz.sf, st_crs(setor.sf))
+```
 
-# Plota o grafo de conectividade por contiguidade
+::: box-dica2
+- `st_set_crs()` define o sistema de referência de coordenadas (CRS) do objeto `viz.sf`.
+
+- Ele está copiando o CRS do objeto `setor.sf`, garantindo que os dois objetos estejam no mesmo sistema de coordenadas.
+:::
+
+```{r, echo=T,  out.width="70%"}
+# Plotando o grafo de conectividade por contiguidade
 mapa.viz <- ggplot(setor.sf) + 
-  geom_sf(fill = 'salmon', color = 'white') +
+  geom_sf(fill = 'lightpink', color = 'white') +
   geom_sf(data = viz.sf) +
   theme_minimal() +
   ggtitle("Vizinhança por \n conectividade") +
@@ -1116,21 +1153,51 @@ mapa.viz
 
 ### Obtendo a correlação da taxa de incidência de dengue Dourados/MS
 
-```{r, echo=T,  out.width="70%"}
+- Convertendo a estrutura criada por `poly2nb(setor.sf)` um formato que funções como `moran.test`.
+
+```{r, echo=T}
 pesos.viz <- nb2listw(viz)
 moran.test(setor.sf$tx, pesos.viz)
 ```
 
+Podemos observar que existe uma forte autocorrelação espacial positiva na variável `tx`, ou seja, valores semelhantes estão espacialmente agrupados. Em outras palavras, setores com valores altos de `tx` tendem a estar próximos de outros setores com valores igualmente altos (e o mesmo vale para valores baixos). Esse padrão não é aleatório, já que o p-valor é muito pequeno, rejeitando a hipótese nula de ausência de autocorrelação espacial.
+
 ### Plotando o correlograma
 
-```{r, echo=T,  out.width="70%"}
+- O correlograma espacial de *Moran’s I* que você gerou está te mostrando como a autocorrelação espacial da variável `tx` varia conforme o "distanciamento" espacial entre os setores.
+
+```{r, echo=T}
 correl <- sp.correlogram(viz, setor.sf$tx, order = 8, method = "I")
 correl
 ```
 
-```{r, echo=T,  out.width="70%"}
+-A tabela consiste:
+
+  i) `estimate`: o valor observado de Moran’s I.
+
+  ii) `expectation`: valor esperado sob aleatoriedade (≈ 0).
+
+  iii) `Pr(I)`: p-valor de significância para cada lag.
+
+
+```{r, echo=T,  out.width="80%"}
 plot(correl)
 ```
+
+
+- Nesse gráfico podemos observar:
+
+  i) O eixo y mostra o valor de Moran’s I para cada lag.
+
+  ii) As barras de erro indicam o intervalo de confiança do Moran’s I em cada lag.
+
+- Podemos compluir então que:
+
+  * Lag 1 (vizinhos imediatos): Moran’s I = 0.5367, altamente significativo (*p < 0.001*) $\rightarrow$ forte autocorrelação espacial positiva.
+
+  * Lags 2 e 3: valores positivos e ainda significativos $\rightarrow$ padrão espacial persiste até o terceiro nível de vizinhança.
+
+  * Lags 4 a 8: valores negativos ou próximos de zero, com significância decrescente ou ausência de significância $\rightarrow$ a autocorrelação desaparece ou se inverte à medida que a distância aumenta.
 
 ### Mapeando os polígonos que tiveram os p-valores mais significativos no Moran Local.
 
@@ -1138,18 +1205,48 @@ plot(correl)
 setor.sf$pval <- localmoran(setor.sf$tx, pesos.viz)[,5]
 
 tm_shape(setor.sf) + 
-  tm_polygons(col='pval', title="p-valores", breaks=c(0, 0.01, 0.05, 0.10, 1), border.col = "white", palette="-Oranges") +
-  tm_scale_bar(width = 0.15) 
+  tm_polygons(
+    col = "pval",
+    title = "p-valores",
+    breaks = c(0, 0.01, 0.05, 0.10, 1),
+    style = "fixed",
+    palette = "-Oranges",
+    border.col = "grey"
+  )
+
 ```
 
 ### Moran Local (Lisa Map) da taxa de incidência Dourados/MS
 
-```{r, echo=T,  out.width="70%"}
+```{r, echo=T}
 resI <- localmoran.sad(lm(setor.sf$tx ~ 1), 1:length(viz), viz, style = "W")
 summary(resI)[1:10,]
 ```
 
+::: box-dica2 
 
+- A função `localmoran.sad()` calcula o Moran Local `(Iᵢ)` e algumas outras estatísticas associadas para cada polígono (setor).
+
+- `lm(setor.sf$tx ~ 1)`:  cria um modelo linear sem preditores (apenas o intercepto), ou seja, considera a variável `tx` como resposta a ser analisada.
+
+- `1:length(viz)`: identifica o índice de cada área/setor.
+
+- `viz`: é a estrutura de vizinhança (do tipo `nb`), que define quem é vizinho de quem.
+
+- `style = "W"`: define o estilo de normalização dos pesos espaciais (padronização row-standardized).
+
+:::
+
+- A está mostrando:
+
+  * `Local Morans I`:	Valor do I de Moran local `(Iᵢ)`, indicando se o valor do setor e seus vizinhos são semelhantes (positivo) ou diferentes (negativo).
+  
+  * `Stand. dev. (N)`:	Desvio padrão padronizado da estatística de Moran local.
+  
+  * `Pr. (N)`:	p-valor do teste de significância para o valor de `Iᵢ` (baseado na dist. normal).
+  
+  * `Saddlepoint`:	Valor do I de Moran local corrigido.
+  
 ```{r, echo=T,  out.width="70%"}
 setor.sf$MoranLocal <- summary(resI)[,1] 
 
@@ -1158,11 +1255,87 @@ library(scales)
 ggplot(setor.sf) + 
   geom_sf(aes(fill = MoranLocal), color = 'black') +
   scale_fill_gradientn(colours=c("blue", "white", "red"), 
-                       values=rescale(c(min(setor.sf$MoranLocal), 0, max(setor.sf$MoranLocal))), guide="colorbar") + 
+                       values=rescale(c(min(setor.sf$MoranLocal), 0,   max(setor.sf$MoranLocal))), guide="colorbar") + 
   ggtitle("Moran local") + 
   theme_void()
 ```
 
+
+Neste mapa, podemos observar:
+
+- Valores altos de Local Morans I com p-valor pequeno indicam clusters estatisticamente significativos:
+
+  * Positivo + significativo $\rightarrow$ cluster alto-alto ou baixo-baixo.
+
+  * Negativo + significativo $\rightarrow$ outlier (ex: um valor alto cercado por baixos, ou o contrário).
+
+### LISA Map
+
+  
+```{r, echo=T}
+library(spdep)
+
+#  Convertendo uma estrutura de vizinhança (objeto nb) em uma matriz de pesos espaciais padronizada
+w <- nb2listw(viz, style = "W")
+
+# Matriz de pesos espaciais padronizada (row-standardized)
+resI <- localmoran(setor.sf$tx, nb2listw(viz, style = "W"))
+
+# Armazena estatísticas no objeto espacial
+setor.sf$Ii       <- resI[,1]   # valor de Moran Local
+setor.sf$pvalue   <- resI[,5]   # p-valor
+
+# Valor padronizado da variável tx
+setor.sf$z_tx <- scale(setor.sf$tx)[, 1]
+
+# Média dos vizinhos (lagged value)
+lag_tx <- lag.listw(w, setor.sf$z_tx)
+
+# Classificação dos tipos de associação local dos clusters
+setor.sf$cluster_type <- "Não significativo"
+
+setor.sf$cluster_type[setor.sf$pvalue <= 0.05 & setor.sf$z_tx > 0 & lag_tx > 0] <- "Alto-Alto"
+setor.sf$cluster_type[setor.sf$pvalue <= 0.05 & setor.sf$z_tx < 0 & lag_tx < 0] <- "Baixo-Baixo"
+setor.sf$cluster_type[setor.sf$pvalue <= 0.05 & setor.sf$z_tx > 0 & lag_tx < 0] <- "Alto-Baixo"
+setor.sf$cluster_type[setor.sf$pvalue <= 0.05 & setor.sf$z_tx < 0 & lag_tx > 0] <- "Baixo-Alto"
+
+
+```
+  
+```{r, echo=T,  out.width="80%"}
+library(tmap)
+
+# Modo estático (ideal para relatórios impressos ou PDF)
+tmap_mode("plot")
+
+# Tema visual limpo com fundo branco
+tmap_style("white")
+
+# Geração do mapa LISA
+tm_shape(setor.sf) +
+  tm_fill(
+    col = "cluster_type",
+    palette = c(
+      "Alto-Alto"         = "#E60000",  # vermelho forte
+      "Baixo-Baixo"       = "#0033CC",  # azul escuro
+      "Baixo-Alto"        = "#9999FF",  # azul claro
+      "Alto-Baixo"        = "#FF9999",  # rosa claro
+      "Não significativo" = "#FFFFFF"   # branco
+    ),
+    title = "Cluster Local (LISA)",
+    legend.is.portrait = TRUE
+  ) +
+  tm_borders(col = "gray40", lwd = 0.4) +
+  tm_layout(
+    main.title = "Mapa LISA - Clusters Locais da Taxa de Incidência",
+    main.title.size = 1.2,
+    legend.outside = TRUE,
+    frame = FALSE,
+    bg.color = "white"
+  )
+
+```
+  
 # **Aplicação IV:** Dengue em Dourados/MS - Parte 2: Modelagem (Modelos Linear, CAR e GWR)
 
 ### Ajustando o modelo de regressão linear simples.
@@ -1202,16 +1375,15 @@ moran.test(dourados.car$carresid, pesos.viz)
 ```{r, echo=T,  out.width="70%"}
 # Biblioteca para ajustar o modelos GWR
 library(spgwr)
+
 # Estimando a largura de banda “ideal” para o kernel
-GWRbanda <- gwr.sel(tx ~ lixo, data = setor.sf, coords = cbind(centroides.sp$X, centroides.sp$Y), 
-    adapt = T)
+GWRbanda <- gwr.sel(tx ~ lixo, data = setor.sf, coords = cbind(centroides.sp$X, centroides.sp$Y), adapt = T)
 ```
 
 
 ```{r, echo=T,  out.width="70%"}
 # Ajustando o modelo GWR
-dourados.gwr = gwr(tx ~ lixo, data = setor.sf, coords = cbind(centroides.sp$X, centroides.sp$Y), 
-    adapt = GWRbanda, hatmatrix = TRUE, se.fit = TRUE)
+dourados.gwr = gwr(tx ~ lixo, data = setor.sf, coords = cbind(centroides.sp$X, centroides.sp$Y), adapt = GWRbanda, hatmatrix = TRUE, se.fit = TRUE)
 
 dourados.gwr
 ```
@@ -1248,8 +1420,8 @@ setor.sf$pred.gwr <- results$pred
 
 ```{r, echo=T,  out.width="80%"}
 map.lixo <- ggplot(setor.sf) + 
-            geom_sf(aes(fill = coef.lixo), color = "black") +              scale_fill_gradientn(colours = pal) + ggtitle("Distribuição dos coef. var. lixo") + 
-            theme_void()
+  geom_sf(aes(fill = coef.lixo), color = "black") +              scale_fill_gradientn(colours = pal) + ggtitle("Distribuição dos coef. var. lixo") + 
+  theme_void()
 map.lixo
 
 ```
@@ -1273,8 +1445,8 @@ setor.sf$wald.teste <- ifelse(setor.sf$wald.teste < 2, 0, 1)
 
 
 map.wald <- ggplot(setor.sf) + geom_sf(aes(fill = factor(wald.teste)), color = "black") + 
-    scale_fill_manual(values = c("white", "purple"), labels = c("< 2", ">= 2"), name = "Wald") + 
-    ggtitle("Coef. lixo significativos") + theme_void()
+  scale_fill_manual(values = c("white", "purple"), labels = c("< 2", ">= 2"), name = "Wald") + 
+  ggtitle("Coef. lixo significativos") + theme_void()
 
 
 library(gridExtra)
@@ -1295,12 +1467,12 @@ ggplot(setor.sf) +
 
 ```{r, echo=T,  out.width="100%"}
 histdens <- function(x, titulo = "") {
-    densi <- density(x)
-    xli <- range(densi$x)
-    yli <- range(densi$y)
-    hist(x, col = "red", probability = T, xlim = xli, ylim = yli, main = titulo)
-    lines(densi, lwd = 2)
-    abline(v = median(x), lwd = 4, col = 4, lty = 2)
+  densi <- density(x)
+  xli <- range(densi$x)
+  yli <- range(densi$y)
+  hist(x, col = "red", probability = T, xlim = xli, ylim = yli, main = titulo)
+  lines(densi, lwd = 2)
+  abline(v = median(x), lwd = 2, col = 4, lty = 2)
 }
 
 par(mfrow = c(2, 2))
@@ -1317,42 +1489,42 @@ hist.gwr <- histdens(results$pred, "Pred GWR")
 library(colorspace)  # 
 
 setor.sf$brks <- cut(setor.sf$tx, include.lowest = TRUE, right = TRUE, breaks = c(-4, 
-    0, 2, 4, 10, 57), labels = c("0", "0 - 2", "2 - 4", "4 - 10", "> 10"))
+                                                                                  0, 2, 4, 10, 57), labels = c("0", "0 - 2", "2 - 4", "4 - 10", "> 10"))
 
 tx.bruta <- ggplot(setor.sf) + geom_sf(aes(fill = brks), color = "black") + ggtitle("Taxa Bruta") + 
-    scale_fill_discrete_sequential(palette = "Heat2", c1 = 80, c2 = 30, l1 = 30, 
-        l2 = 90, p1 = 0.2, p2 = 1.5, na.value = "grey75", drop = FALSE, name = "Taxa") + 
-    theme_void()
+  scale_fill_discrete_sequential(palette = "Heat2", c1 = 80, c2 = 30, l1 = 30, 
+                                 l2 = 90, p1 = 0.2, p2 = 1.5, na.value = "grey75", drop = FALSE, name = "Taxa") + 
+  theme_void()
 
 
 
 setor.sf$brks.lm <- cut(dourados.lm$fitted.values, lowest = TRUE, right = TRUE, breaks = c(-4, 
-    0, 2, 4, 10, 57), labels = c("0", "0 - 2", "2 - 4", "4 - 10", "> 10"))
+                                                                                           0, 2, 4, 10, 57), labels = c("0", "0 - 2", "2 - 4", "4 - 10", "> 10"))
 
 
 pred.lm <- ggplot(setor.sf) + geom_sf(aes(fill = brks.lm), color = "black") + ggtitle("Taxa Predita - LM") + 
-    scale_fill_discrete_sequential(palette = "Heat2", c1 = 80, c2 = 30, l1 = 30, 
-        l2 = 90, p1 = 0.2, p2 = 1.5, na.value = "grey75", drop = FALSE, name = "Taxa") + 
-    theme_void()
+  scale_fill_discrete_sequential(palette = "Heat2", c1 = 80, c2 = 30, l1 = 30, 
+                                 l2 = 90, p1 = 0.2, p2 = 1.5, na.value = "grey75", drop = FALSE, name = "Taxa") + 
+  theme_void()
 
 setor.sf$brks.car <- cut(dourados.car$fitted.values, lowest = TRUE, right = TRUE, 
-    breaks = c(-4, 0, 2, 4, 10, 57), labels = c("0", "0 - 2", "2 - 4", "4 - 10", 
-        "> 10"))
+                         breaks = c(-4, 0, 2, 4, 10, 57), labels = c("0", "0 - 2", "2 - 4", "4 - 10", 
+                                                                     "> 10"))
 
 
 pred.car <- ggplot(setor.sf) + geom_sf(aes(fill = brks.car), color = "black") + ggtitle("Taxa Predita - CAR") + 
-    scale_fill_discrete_sequential(palette = "Heat2", c1 = 80, c2 = 30, l1 = 30, 
-        l2 = 90, p1 = 0.2, p2 = 1.5, na.value = "grey75", drop = FALSE, name = "Taxa") + 
-    theme_void()
+  scale_fill_discrete_sequential(palette = "Heat2", c1 = 80, c2 = 30, l1 = 30, 
+                                 l2 = 90, p1 = 0.2, p2 = 1.5, na.value = "grey75", drop = FALSE, name = "Taxa") + 
+  theme_void()
 
 setor.sf$brks.gwr <- cut(results$pred, lowest = TRUE, right = TRUE, breaks = c(-4, 
-    0, 2, 4, 10, 57), labels = c("0", "0 - 2", "2 - 4", "4 - 10", "> 10"))
+                                                                               0, 2, 4, 10, 57), labels = c("0", "0 - 2", "2 - 4", "4 - 10", "> 10"))
 
 
 pred.gwr <- ggplot(setor.sf) + geom_sf(aes(fill = brks.car), color = "black") + ggtitle("Taxa Predita - GWR") + 
-    scale_fill_discrete_sequential(palette = "Heat2", c1 = 80, c2 = 30, l1 = 30, 
-        l2 = 90, p1 = 0.2, p2 = 1.5, na.value = "grey75", drop = FALSE, name = "Taxa") + 
-    theme_void()
+  scale_fill_discrete_sequential(palette = "Heat2", c1 = 80, c2 = 30, l1 = 30, 
+                                 l2 = 90, p1 = 0.2, p2 = 1.5, na.value = "grey75", drop = FALSE, name = "Taxa") + 
+  theme_void()
 
 library(gridExtra)
 grid.arrange(tx.bruta, pred.lm, pred.car, pred.gwr, ncol = 2)
@@ -1363,7 +1535,7 @@ grid.arrange(tx.bruta, pred.lm, pred.car, pred.gwr, ncol = 2)
 ```{r, echo=T,  out.width="90%"}
 library(vioplot)
 vioplot(dourados.lm$residuals, dourados.car$residuals, results$residuos, names = c("LM", 
-    "CAR", "GWR"), col = "orange")
+                                                                                   "CAR", "GWR"), col = "orange")
 title("Gráficos violinos da distribuição dos resíduos")
 ```
 
@@ -1373,32 +1545,32 @@ title("Gráficos violinos da distribuição dos resíduos")
 library(colorspace)  # 
 
 setor.sf$brks.res.lm <- cut(dourados.lm$residuals, include.lowest = TRUE, right = TRUE, 
-    breaks = c(-14, -5, -1, 1, 5, 52), labels = c("< -5", "-5 a -1", "0", "1 a 5", 
-        "> 5"))
+                            breaks = c(-14, -5, -1, 1, 5, 52), labels = c("< -5", "-5 a -1", "0", "1 a 5", 
+                                                                          "> 5"))
 
 res.lm <- ggplot(setor.sf) + geom_sf(aes(fill = brks.res.lm), color = "black") + 
-    ggtitle("Resíduos - LM") + scale_fill_discrete_sequential(palette = "Purple-Yellow", 
-    c1 = 80, c2 = 30, l1 = 30, l2 = 90, p1 = 0.2, p2 = 1.5, na.value = "grey75", 
-    drop = FALSE, name = "Taxa") + theme_void()
+  ggtitle("Resíduos - LM") + scale_fill_discrete_sequential(palette = "Purple-Yellow", 
+                                                            c1 = 80, c2 = 30, l1 = 30, l2 = 90, p1 = 0.2, p2 = 1.5, na.value = "grey75", 
+                                                            drop = FALSE, name = "Taxa") + theme_void()
 
 setor.sf$brks.res.car <- cut(dourados.car$residuals, include.lowest = TRUE, right = TRUE, 
-    breaks = c(-14, -5, -1, 1, 5, 52), labels = c("< -5", "-5 a -1", "0", "1 a 5", 
-        "> 5"))
+                             breaks = c(-14, -5, -1, 1, 5, 52), labels = c("< -5", "-5 a -1", "0", "1 a 5", 
+                                                                           "> 5"))
 
 res.car <- ggplot(setor.sf) + geom_sf(aes(fill = brks.res.car), color = "black") + 
-    ggtitle("Resíduos - CAR") + scale_fill_discrete_sequential(palette = "Purple-Yellow", 
-    c1 = 80, c2 = 30, l1 = 30, l2 = 90, p1 = 0.2, p2 = 1.5, na.value = "grey75", 
-    drop = FALSE, name = "Taxa") + theme_void()
+  ggtitle("Resíduos - CAR") + scale_fill_discrete_sequential(palette = "Purple-Yellow", 
+                                                             c1 = 80, c2 = 30, l1 = 30, l2 = 90, p1 = 0.2, p2 = 1.5, na.value = "grey75", 
+                                                             drop = FALSE, name = "Taxa") + theme_void()
 
 
 setor.sf$brks.res.gwr <- cut(results$residuos, include.lowest = TRUE, right = TRUE, 
-    breaks = c(-14, -5, -1, 1, 5, 52), labels = c("< -5", "-5 a -1", "0", "1 a 5", 
-        "> 5"))
+                             breaks = c(-14, -5, -1, 1, 5, 52), labels = c("< -5", "-5 a -1", "0", "1 a 5", 
+                                                                           "> 5"))
 
 res.gwr <- ggplot(setor.sf) + geom_sf(aes(fill = brks.res.gwr), color = "black") + 
-    ggtitle("Resíduos - GWR") + scale_fill_discrete_sequential(palette = "Purple-Yellow", 
-    c1 = 80, c2 = 30, l1 = 30, l2 = 90, p1 = 0.2, p2 = 1.5, na.value = "grey75", 
-    drop = FALSE, name = "Taxa") + theme_void()
+  ggtitle("Resíduos - GWR") + scale_fill_discrete_sequential(palette = "Purple-Yellow", 
+                                                             c1 = 80, c2 = 30, l1 = 30, l2 = 90, p1 = 0.2, p2 = 1.5, na.value = "grey75", 
+                                                             drop = FALSE, name = "Taxa") + theme_void()
 
 
 library(gridExtra)
@@ -1489,18 +1661,18 @@ include_graphics('figuras/variograma_model.png')
 ```{r, echo=T}
 ## 1) Modelo Linear
 lin.fit  = fit.variogram(variogram.emp, 
-                          model = vgm(psill = 240, model = "Lin",
-                                      range = 5000, nugget = 10))
+                         model = vgm(psill = 240, model = "Lin",
+                                     range = 5000, nugget = 10))
 
 ## 2) Modelo exponencial
 exp.fit  = fit.variogram(variogram.emp, 
-                          model = vgm(psill = 240, model = "Exp",
-                                      range = 5000, nugget = 10))
+                         model = vgm(psill = 240, model = "Exp",
+                                     range = 5000, nugget = 10))
 
 ## 3) Modelo gaussiano
 gau.fit  = fit.variogram(variogram.emp, 
-                          model = vgm(psill = 240, model = "Gau",
-                                      range = 5000, nugget = 10))
+                         model = vgm(psill = 240, model = "Gau",
+                                     range = 5000, nugget = 10))
 
 ## 3) Modelo wave
 wav.fit  = fit.variogram(variogram.emp, 
@@ -1633,8 +1805,8 @@ plot(raster_chuva)
 ```
 
 - Caso queira salvar a imagem raster em um arquivo formato geotiff para ler em algum SIG por exemplo:
-
-```{r, echo=T}
+  
+  ```{r, echo=T}
 # Exportando o objeto da imagem
 writeRaster(raster_chuva,
             filename = 'dados/chuva_rio/chuva_auto.tiff',
@@ -1690,7 +1862,7 @@ leaflet(data = estacoes.longlat, options = leafletOptions(
   # addProviderTiles(providers$CartoDB.Voyager) |>
   addMarkers(~X, ~Y, popup = ~as.character(est), label = ~as.character(est),
              group = "Estações") |>
-############## Polígonos dos Bairros ################
+  ############## Polígonos dos Bairros ################
 addPolygons(data=bairros.longlat,
             weight = 3,
             color = "darkblue",
@@ -1701,18 +1873,18 @@ addPolygons(data=bairros.longlat,
               textsize = "13px",
               direction = "auto"), 
             group = "Bairros") |>
-########## Adicionando o raster  #########################
+  ########## Adicionando o raster  #########################
 addRasterImage(raster_chuva_longlat, colors = pal, opacity = 0.8,
                group = "Chuva: 1 semana") %>%
-leaflet::addLegend(pal = pal, values = values(raster_chuva_longlat),
-            title = "Chuva Acumulada - 1 semana", group = "Chuva: 1 semana") |>
-############## Controle das layers (botoes) ################
+  leaflet::addLegend(pal = pal, values = values(raster_chuva_longlat),
+                     title = "Chuva Acumulada - 1 semana", group = "Chuva: 1 semana") |>
+  ############## Controle das layers (botoes) ################
 addLayersControl(
   baseGroups = c("Voyager", "Ruas", "Satélite", "Toner"),
   overlayGroups = c("Estações", "Bairros",  "Chuva: 1 semana"),
   options = layersControlOptions(collapsed = FALSE),
   position = "bottomleft") |>
-########## Desabilitando os grupos ################
+  ########## Desabilitando os grupos ################
 hideGroup(group = c("Bairros"))
 ```
 
@@ -1740,25 +1912,3 @@ hideGroup(group = c("Bairros"))
 
 * GEOG5917 Big Data & Consumer Analytics - RStudio Practicals by Lex Comber
 [On-line Book](https://bookdown.org/lexcomber/GEOG5917/)
-
-<!-- # Programa de Pós-Graduação em Epidemiologia em Saúde Pública (ENSP/FIOCRUZ) -->
-
-<!-- - Programa de Pós-Graduação em Epidemiologia em Saúde Pública (ENSP/FIOCRUZ) [link](http://ensino.ensp.fiocruz.br/cursos/mestrado-e-doutorado/epidemiologia-em-saude-publica)) -->
-
-<!-- ```{r echo=F, fig.align="center", out.width="80%"} -->
-<!-- include_graphics('figuras/programa_epidemiologia.png') -->
-<!-- ``` -->
-
-<!-- # Programa de Pós-Graduação em Ciências Veterinárias (IV/UFRRJ) -->
-
-<!-- - Programa de Pós-Graduação em Ciências Veterinárias (IV/UFRRJ) [link](http://cursos.ufrrj.br/posgraduacao/ppgcv/) -->
-
-<!-- ```{r echo=F, fig.align="center", out.width="80%"} -->
-<!-- include_graphics('figuras/programa_veterinaria.png') -->
-<!-- ``` -->
-
-<!-- # Obrigado !!!!! -->
-
-<!-- ```{r echo=F, fig.align="center", out.width="90%"} -->
-<!-- include_graphics('figuras/Obrigado.png') -->
-<!-- ``` -->
