@@ -1831,6 +1831,10 @@ grid.arrange(res.lm, res.car, res.gwr, ncol = 2)
 
 # **Aplicação V:** Geoestatística com dados de pluviosidade na cidade do Rio de Janeiro/RJ
 
+Nesta aplicação, utilizaremos técnicas de geoestatística para analisar os dados de chuva acumulada provenientes das estações pluviométricas do sistema Alerta Rio. Os dados referem-se à média da precipitação acumulada em 7 dias, com base nos totais das últimas 24h e 96h, permitindo uma visão mais abrangente da distribuição espacial da chuva no município.
+
+Através do uso de bibliotecas do R específicas para análise espacial e interpolação, o objetivo é construir modelos geoestatísticos que possibilitem a interpolação dos valores de precipitação em regiões não monitoradas diretamente por estações. Esse tipo de abordagem pode auxiliar tanto no planejamento urbano quanto na prevenção de desastres naturais.
+
 ### Biliotecas do R que serão utilizadas
 
 ```{r, echo=T}
@@ -1844,13 +1848,16 @@ library(raster)
 library(leaflet)
 ```
 
-### Importando a tabela com a chuva acumulada média de 7 dias das últimas 24hs e 96hs das estações pluviométricas da cidde do Rio de Janeiro
+### Importando a tabela com a chuva acumulada média de 7 dias das últimas 24hs e 96hs das estações pluviométricas da cidade do Rio de Janeiro
 
 [Descrição das Estações (Alerta Rio)](http://www.sistema-alerta-rio.com.br/dados-meteorologicos/info-estacoes/)
 
 [Download Dados Pluviométricos (Alerta Rio)](http://www.sistema-alerta-rio.com.br/dados-meteorologicos/download/dados-pluviometricos/)
 
+* Como esses dados já foram baixados, iremos ler direto no R:
+
 ```{r, echo=T}
+# 
 pluvio <- read.csv("dados/chuva_rio/pluviosidade.csv", sep=";")
 ```
 
@@ -1882,26 +1889,72 @@ bubble(pluvio, "acumulado_24h", key.entries = quantil, pch=19, col="blue")
 spplot(pluvio['acumulado_24h'], scales=list(draw=T), key.space="right", colorkey=T)
 ```
 
-### Modelando o variograma experimental (ou empírico)
+### 📌 Variograma Experimental (ou empírico)
 
-- **width** - Distância média entre amostras ou distância dos lags
-- **cutoff** - Máxima distância
+O variograma experimental (ou empírico) é uma ferramenta usada em geoestatística para medir como a semelhança entre os valores de uma variável muda com a distância entre os pontos amostrados. Nesse caso, o variograma experimental vai nos ajudar a entender quão relacionados estão os valores de chuva conforme a distância entre as estações pluviométricas aumenta.
+
+🧪 Como é construído ?
+
+1. Para vários pares de pontos, calcula-se a diferença entre os valores medidos (por exemplo, de chuva em 24h).
+
+2. Agrupa-se esses pares por faixas de distância (os "lags").
+
+3. Para cada faixa, calcula-se a média da variância entre os pares.
+
+🧠 Por que é importante ?
+
+1. O variograma experimental é a base para escolher e ajustar um modelo geoestatístico.
+
+2. Ele permite aplicar métodos como krigagem, para estimar valores em locais sem medição.
+
 
 ```{r, echo=T}
 variogram.emp = variogram(acumulado_24h ~x+y, pluvio, width=1000, cutoff=20000)
 variogram.emp
 ```
 
+::: box-dica2
+
+- `acumulado_24h ~ x + y`: estamos analisando como a variável chuva acumulada varia no espaço (coordenadas x e y).
+
+- `width = 1000`: define que os pares de pontos serão agrupados em intervalos de 1000 metros, ou seja, é aistância média entre amostras ou distância dos lags.
+
+- `cutoff = 20000`: só serão considerados pares de pontos com até 20 km de distância (Distância máxima entre os pontos amostrados).
+:::
+
+
+
 ```{r, echo=T}
 # Variogram plot
 plot(variogram.emp, main = "Empirical variogram", pch = 19, col = "darkblue")
 ```
 
-### Ajustando o semivariograma teórico
+::: box-dica2
 
-- **Sill** - Semivariância estrutural ou contribuição (ponto máximo que chega ao plato no eixo de y)
-- **Range** - Alcance (ponto máximo em x)
-- **Nugget** - Efeito pepita, quando (y, 0)
+Esse código plota o variograma experimental (ou empírico), que foi criado anteriormente com o objeto `variogram.emp`.
+
+:::
+
+### 📌 Semivariograma Teórico
+
+É uma função matemática ajustada sobre o variograma experimental. Ele serve para modelar a relação espacial entre os dados (ex: chuva), e é usado para realizar interpolações com krigagem.
+
+🟡 **Nugget (efeito pepita)**:  É o valor do variograma no ponto zero da distância ($x = 0$).
+
+⚫ **Sill (patamar ou limite da variância)**: É o valor máximo da semivariância (eixo $Y$), onde a curva estabiliza. Indica o ponto em que os dados deixam de estar correlacionados espacialmente.
+
+📏 **Range (alcance)**: É a distância (eixo $X$) até onde os dados ainda estão correlacionados. Depois do range, os pontos não têm mais relação espacial entre si.
+
+🤔 Por que isso importa ?
+
+Esses três parâmetros (nugget, sill e range) definem como a variável se comporta no espaço, e são essenciais para:
+
+* Interpolar dados em locais sem observação (krigagem),
+
+* Planejar amostragem eficiente,
+
+* Entender o grau de continuidade espacial de um fenômeno.
+
 
 ```{r echo=F, fig.align="center", out.width= "70%", fig.show='hold'}
 include_graphics('figuras/variograma_model.png')
