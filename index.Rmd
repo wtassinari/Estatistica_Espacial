@@ -1935,6 +1935,8 @@ Esse código plota o variograma experimental (ou empírico), que foi criado ante
 
 :::
 
+O variograma empírico mostra que há uma autocorrelação espacial positiva entre os pontos amostrados até aproximadamente 10.000 unidades de distância. Após esse ponto, a semivariância se estabiliza, sugerindo que a dependência espacial se dissipa. Oscilações em maiores distâncias podem indicar variação não explicada (efeito pepita) ou padrões espaciais mais complexos.
+
 ### 📌 Semivariograma Teórico
 
 É uma função matemática ajustada sobre o variograma experimental. Ele serve para modelar a relação espacial entre os dados (ex: chuva), e é usado para realizar interpolações com krigagem.
@@ -1959,37 +1961,120 @@ Esses três parâmetros (nugget, sill e range) definem como a variável se compo
 ```{r echo=F, fig.align="center", out.width= "70%", fig.show='hold'}
 include_graphics('figuras/variograma_model.png')
 ```
+
 [Fonte do gráfico](https://vsp.pnnl.gov/help/Vsample/Kriging_Variogram_Model.htm)
+
+📌 Alguns modelos mais usuais para o ajuste do variograma teorico:
+
+```{r variograma-teorico, echo=FALSE, message=FALSE, warning=FALSE}
+library(gstat)
+library(ggplot2)
+library(dplyr)
+
+psill <- 80
+range <- 12000
+nugget <- 15
+h <- seq(1, 20000, length.out = 200)
+
+lin <- variogramLine(vgm(psill, "Lin", range, nugget), dist_vector = h) |> mutate(Modelo = "Linear")
+exp <- variogramLine(vgm(psill, "Exp", range, nugget), dist_vector = h) |> mutate(Modelo = "Exponencial")
+gau <- variogramLine(vgm(psill, "Gau", range, nugget), dist_vector = h) |> mutate(Modelo = "Gaussiano")
+wav <- suppressWarnings(na.omit(variogramLine(vgm(psill, "Wav", range, nugget), dist_vector = h))) |> mutate(Modelo = "Wave")
+
+p0 <- data.frame(dist = 0, gamma = nugget)
+p0_list <- lapply(c("Linear", "Exponencial", "Gaussiano", "Wave"), \(m) cbind(p0, Modelo = m))
+
+dados <- bind_rows(p0_list[[1]], p0_list[[2]], p0_list[[3]], p0_list[[4]],
+                   lin, exp, gau, wav)
+
+dados <- dados %>% filter(!is.na(gamma) & is.finite(gamma))
+
+ggplot(dados, aes(x = dist, y = gamma, color = Modelo, linetype = Modelo)) +
+  geom_line(size = 1.2) +
+  labs(title = "Modelos Teóricos de Variograma",
+       x = "Distância", y = "Semivariância") +
+  theme_minimal(base_size = 14) +
+  theme(
+    legend.position = "bottom",
+    legend.title = element_blank(),
+    plot.title = element_text(face = "bold", hjust = 0.5),
+    axis.line = element_line(color = "black"),
+    panel.grid = element_line(color = "gray90"),
+    panel.grid.minor = element_blank()
+  )
+```
+
+
+📌 Parâmetros sugeridos para ajuste do variograma teórico:
+
+Observando o Variograma Empírico, é possível sugerir os três parâmetros principais que definem a estrutura espacial dos dados:
+
+| Parâmetro                  | Significado                                                                        | Interpretação visual no seu gráfico                                                                          |
+| -------------------------- | ---------------------------------------------------------------------------------- | ------------------------------------------------------------------------------------------------------------ |
+| **Nugget (efeito pepita)** | Variação a distância zero (ruído, erro de medição, microvariação)                  | O valor de semivariância onde o gráfico começa. Visualmente está entre **10 e 15**                           |
+| **Range (alcance)**        | Distância onde a semivariância se estabiliza (pontos além disso são independentes) | A estabilização parece ocorrer por volta de **10.000 a 12.000 unidades de distância**                        |
+| **Sill (platô)**           | Valor máximo da semivariância (nugget + psill)                                     | O platô está próximo de **80 a 100**, portanto o `psill` seria algo como **70 a 90** (psill = sill - nugget) |
+
 
 
 ```{r, echo=T}
 ## 1) Modelo Linear
 lin.fit  = fit.variogram(variogram.emp, 
-                         model = vgm(psill = 240, model = "Lin",
-                                     range = 5000, nugget = 10))
+                         model = vgm(psill = 80, model = "Lin",
+                                     range = 12000, nugget = 15))
 
 ## 2) Modelo exponencial
 exp.fit  = fit.variogram(variogram.emp, 
-                         model = vgm(psill = 240, model = "Exp",
-                                     range = 5000, nugget = 10))
+                         model = vgm(psill = 80, model = "Exp",
+                                     range = 12000, nugget = 15))
 
 ## 3) Modelo gaussiano
 gau.fit  = fit.variogram(variogram.emp, 
-                         model = vgm(psill = 240, model = "Gau",
-                                     range = 5000, nugget = 10))
+                         model = vgm(psill = 80, model = "Gau",
+                                     range = 12000, nugget = 15))
 
-## 3) Modelo wave
+## 4) Modelo wave
 wav.fit  = fit.variogram(variogram.emp, 
-                         model = vgm(psill = 240, model = "Wav",
-                                     range = 5000, nugget = 10))
+                         model = vgm(psill = 80, model = "Wav",
+                                     range = 12000, nugget = 15))
+
 ```
 
-```{r, echo=T, out.width= "100%"}
-plot.lin <- plot(variogram.emp, lin.fit, main = "Modelo Linear")
-plot.exp <- plot(variogram.emp, exp.fit, main = "Modelo Exponencial")
-plot.gau <- plot(variogram.emp, gau.fit, main = "Modelo Gaussiano")
-plot.wav <- plot(variogram.emp, wav.fit, main = "Modelo Wave")
+::: box-dica2
+
+Os comandos usam a função `fit.variogram()` do pacote `gstat` no R para ajustar modelos teóricos ao variograma empírico (representado pelo objeto `variogram.emp` da figura acima). Isso é essencial para modelar a dependência espacial entre os dados.
+
+Os modelos ajustados foram: Modelo Linear (`Lin`), Exponencial (`Exp`), Gaussiano (`Gau`) e Wave (`Wav`). Para o ajuste dos mpdels, foram utilizados os seguintes parâmentros que definem a estrutura espacial dos dados:
+
+- `model`: tipo de modelo teórico (forma da curva).
+
+- `psill`: efeito de platô (sill parcial).
+
+- `range`: alcance da dependência espacial.
+
+- `nugget`: efeito pepita (variação não explicada, ruído ou erro de medição).
+
+:::
+
+```{r echo=FALSE, out.width="90%"}
+# Layout: 2 linhas, 2 colunas
+par(mfrow = c(2, 2))
+
+# Plota cada modelo com linha vermelha
+plot(variogram.emp, lin.fit, main = "Modelo Linear", col.line = "red")
+plot(variogram.emp, exp.fit, main = "Modelo Exponencial", col.line = "red")
+plot(variogram.emp, gau.fit, main = "Modelo Gaussiano", col.line = "red")
+plot(variogram.emp, wav.fit, main = "Modelo Wave", col.line = "red")
+
+# Restaura o layout padrão
+par(mfrow = c(1, 1))
 ```
+
+
+
+```
+
+
 
 ### Validação cruzada 
 
