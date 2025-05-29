@@ -144,7 +144,7 @@ Segundo Noel Cressie (1993), a estatística espacial pode ser dividida em três 
 
 # Padrões Pontuais
 
-* O principal interesse está no conjunto de coordenadas geográficas representando as localizações exatas de eventos.
+O principal interesse está no conjunto de coordenadas geográficas representando as localizações exatas de eventos.
 
 ```{r echo=F, fig.align="center", message=FALSE, warning=FALSE, comments=NA, out.width="50%", comment=NA}
 knitr::include_graphics('figuras/coordenadas.png')
@@ -198,21 +198,23 @@ $$\hat{\lambda}_{\tau}(u) = \dfrac{1}{\tau^2}\sum k(\dfrac{d(u_i , u)}{\tau}) \t
 Sabendo que:
 
 - $\hat{\lambda}_{\tau}(u)$: estimativa da intensidade do processo pontual no ponto $u$.
+
+- $u_i$: coordenadas dos pontos observados no plano (ex.: localização dos eventos).
     
 - $\tau$: parâmetro de suavização (largura de banda), define o raio de influência dos pontos ao redor de $u$.
     
-- $u_i$: coordenadas dos pontos observados no plano (ex.: localização dos eventos).
-    
 - $d(u_i, u)$: distância entre o ponto observado $u_i$ e o ponto de avaliação $u$. Normalmente, a distância euclidiana.
+
+- Condição $d(u_i, u) \leq \tau$: garante que apenas os pontos dentro da vizinhança (de raio $\tau$) contribuam para a estimativa.
     
 - $k(\cdot)$: função kernel que define o peso atribuído a cada ponto com base na distância. Exemplos:
     
-i) *Kernel gaussiano*: atribui maior peso aos pontos mais próximos.
-ii) *Kernel uniforme*: todos os pontos dentro do raio recebem o mesmo peso.
-iii) *Kernel Epanechnikov*: pesos decrescem com a distância, chegando a zero na borda.
+i) **Kernel gaussiano**: atribui maior peso aos pontos mais próximos.
+ii) **Kernel uniforme**: todos os pontos dentro do raio recebem o mesmo peso.
+iii) **Kernel Epanechnikov**: pesos decrescem com a distância, chegando a zero na borda.
 
     
-- Condição $d(u_i, u) \leq \tau$: garante que apenas os pontos dentro da vizinhança (de raio $\tau$) contribuam para a estimativa.
+
     
 ### Como funciona:
 
@@ -224,9 +226,9 @@ iii) *Kernel Epanechnikov*: pesos decrescem com a distância, chegando a zero na
 
 ::: box-dica1
 
-🌧️ Analogia intuitiva:
+🌧️ **Analogia intuitiva:**
 
-O kernel atua como um limpador de para-brisa, pesando mais os eventos próximos e menos os eventos muito distantes. A escolha do tamanho do limpador ($\tau$) e do tipo de movimento (forma da função kernel) define o quanto você vê ao redor do ponto onde está focando.
+O kernel atua como um *limpador de para-brisa*, pesando mais os eventos próximos e menos os eventos muito distantes. A escolha do tamanho do limpador ($\tau$) e do tipo de movimento (forma da função kernel) define o quanto você vê ao redor do ponto onde está focando.
 :::
 
 ```{r echo=F, fig.align="center", out.width= "50%", fig.show='hold'}
@@ -239,7 +241,7 @@ i) Largura pequena ($500 m$): permite detectar agrupamentos muito locais, mas po
 
 ii) Largura intermediária ($1.500 m$): equilíbrio entre detalhe e suavidade.
 
-Largura maior ($2.500 m$): suaviza padrões locais, ideal para visualizar tendências gerais.
+iii) Largura maior ($2.500 m$): suaviza padrões locais, ideal para visualizar tendências gerais.
 
 
 [*Fonte: Referência científica: Druck, S.; Carvalho, M.S.; Câmara, G.; Monteiro, A.V.M. (eds) "Análise Espacial de Dados Geográficos". Brasília, EMBRAPA, 2004](http://www.dpi.inpe.br/gilberto/livro/analise/cap2-eventos.pdf)
@@ -247,7 +249,7 @@ Largura maior ($2.500 m$): suaviza padrões locais, ideal para visualizar tendê
 
 # Geoestatística
 
-* Dados usados em geoestatística são atributos contínuos medidos em localizações fixas, na maioria das vezes amostrados no espaço geográfico, e que queremos analisar para entender como um fenômeno varia no espaço.
+Dados usados em geoestatística são atributos contínuos medidos em localizações fixas, na maioria das vezes amostrados no espaço geográfico, e que queremos analisar para entender como um fenômeno varia no espaço.
 
 ## Estrutura dos dados geoestatísticos
 
@@ -314,21 +316,23 @@ include_graphics('figuras/variograma1.png')
 
 ::: box-dica1
 
-📌 **Efeito Pepita (C₀)**: É a variação observada mesmo quando a distância entre os pontos é muito pequena ou zero. Costuma representar erros de medição ou variabilidade microscópica não capturada.
+📌 **Efeito Pepita (C₀)**: É a variação observada mesmo quando a distância entre os pontos é muito pequena ou zero. 
 
-📌 **Patamar (C)**: É o valor em que o variograma se estabiliza, indicando que a partir de certa distância, a variabilidade entre os pontos não aumenta mais. Representa a variância total dos dados.
+📌 **Patamar (C)**: É o valor em que o variograma se estabiliza, indicando que a partir de certa distância, a variabilidade entre os pontos não aumenta mais. 
 
 📌 **Alcance (a)**: É a distância a partir da qual dois pontos deixam de estar correlacionados. Até essa distância, os valores ainda apresentam semelhança espacial, ou seja, após essa distância, tornam-se independentes.
 
 :::
 
-Apesar de útil, essa fórmula não é robusta em todas as situações. Em alguns casos, a variabilidade não é constante ao longo da área estudada — o que chamamos de heterocedasticidade. Nesses cenários, modelos diferentes podem ser utilizados para representar o comportamento do semivariograma. Por exemplo:
+Apesar de útil, essa fórmula não é robusta em todas as situações. Em alguns casos, a variabilidade não é constante ao longo da área estudada, o que chamamos de heterocedasticidade. Nesses cenários, modelos diferentes podem ser utilizados para representar o comportamento do semivariograma. Por exemplo:
 
-- Modelo Exponencial
+i) **Modelo Exponencial**
 
-- Modelo Esférico
+ii) **Modelo Esférico**
 
-- Modelo Gaussiano
+iii) **Modelo Gaussiano**
+
+iv) **Outros**
 
 
 
@@ -352,9 +356,9 @@ A imagem mostra a interpolação do teor de argila em uma área agrícola da Faz
 
 # Dados de Área
 
-* Na análise espacial por áreas, o atributo de interesse costuma ser uma medida agregada (como contagem de casos, taxa de mortalidade, média de renda, etc.) calculada dentro de uma unidade geográfica bem definidas (como bairros, municípios, setores censitários ou regiões administrativas.)
+Na análise espacial por áreas, o atributo de interesse costuma ser uma medida agregada (como contagem de casos, taxa de mortalidade, média de renda, etc.) calculada dentro de uma unidade geográfica bem definidas (como bairros, municípios, setores censitários ou regiões administrativas.)
 
-* Essas áreas são representadas por polígonos, que podem ter formas irregulares e manter relações espaciais com as áreas vizinhas, seja por fronteiras compartilhadas, conexões físicas (como estradas e rios), ou por semelhanças em características socioeconômicas (como nível de renda ou acesso a serviços).
+Essas áreas são representadas por polígonos, que podem ter formas irregulares e manter relações espaciais com as áreas vizinhas, seja por fronteiras compartilhadas, conexões físicas (como estradas e rios), ou por semelhanças em características socioeconômicas (como nível de renda ou acesso a serviços).
 
 ::: box-dica2
 O objetivo da análise de dados de área é identificar, explicar e interpretar padrões espaciais e tendências que ocorrem entre essas unidades geográficas pré-definidas.
@@ -375,9 +379,9 @@ O objetivo da análise de dados de área é identificar, explicar e interpretar 
 
 ## Mapa Temático
 
-* O mapa temático tem como principal objetivo visualizar e analisar a distribuição espacial de um fenômeno específico.
+O mapa temático tem como principal objetivo visualizar e analisar a distribuição espacial de um fenômeno específico.
 
-* O mapa temático abaixo mostra a frequência de artigos científicos selecionados na revisão integrativa sobre diagnóstico microbiológico de Salmonella spp. na aquicultura entre 2000 e 2020 por países de diferentes continentes. Fonte: Porto et al. 2023 ([link](https://tede.ufrrj.br/jspui/bitstream/jspui/6673/2/2023%20-%20Yuri%20Duarte%20Porto%20%28parcialmente%20liberada%29.pdf)).
+O mapa temático abaixo mostra a frequência de artigos científicos selecionados na revisão integrativa sobre diagnóstico microbiológico de Salmonella spp. na aquicultura entre 2000 e 2020 por países de diferentes continentes. Fonte: Porto et al. 2023 ([link](https://tede.ufrrj.br/jspui/bitstream/jspui/6673/2/2023%20-%20Yuri%20Duarte%20Porto%20%28parcialmente%20liberada%29.pdf)).
 
 ```{r echo=F, fig.align="center", out.width="70%"}
 knitr::include_graphics('figuras/tese_yuri.png')
@@ -386,9 +390,9 @@ knitr::include_graphics('figuras/tese_yuri.png')
 
 ## Matriz de Vizinhança
 
-- A **matriz de vizinhança** \( W \) é uma matriz quadrada de dimensão \( n \times n \), onde cada elemento \( w_{ij} \) representa uma **medida de proximidade ou conectividade espacial** entre duas regiões \( O_i \) e \( O_j \).
+A **matriz de vizinhança** \( W \) é uma matriz quadrada de dimensão \( n \times n \), onde cada elemento \( w_{ij} \) representa uma **medida de proximidade ou conectividade espacial** entre duas regiões \( O_i \) e \( O_j \).
 
-- Essa matriz é fundamental na análise espacial, pois define **quais áreas são consideradas vizinhas** e como essa vizinhança influencia os fenômenos observados.
+Essa matriz é fundamental na análise espacial, pois define **quais áreas são consideradas vizinhas** e como essa vizinhança influencia os fenômenos observados.
 
 ```{r echo=F, fig.align="center", out.width="80%"}
 knitr::include_graphics('figuras/vizinhanca.png')
@@ -400,17 +404,19 @@ knitr::include_graphics('figuras/vizinhanca.png')
 
 📌 Critérios comuns para definir vizinhança:
 
-- \( w_{ij} = 1 \), se \( O_i \) **toca** \( O_j \) (ou seja, compartilham uma fronteira comum). Esse também é chamado de critério de **contiguidade**.
+i) \( w_{ij} = 1 \), se \( O_i \) **toca** \( O_j \) (ou seja, compartilham uma fronteira comum). Esse também é chamado de critério de **contiguidade**.
 
-- \( w_{ij} = 1 \), se a **distância entre os centróides** das regiões \( O_i \) e \( O_j \) for **menor que um limite \( h \)**. Esse é o critério baseado em **distância geográfica**.
+ii) \( w_{ij} = 1 \), se a **distância entre os centróides** das regiões \( O_i \) e \( O_j \) for **menor que um limite \( h \)**. Esse é o critério baseado em **distância geográfica**.
 
-- \( w_{ij} = \frac{l_{ij}}{l_i} \), onde:
+iii) \( w_{ij} = \frac{l_{ij}}{l_i} \), onde:
 
   - \( l_{ij} \): comprimento da fronteira compartilhada entre \( O_i \) e \( O_j \)
   
   - \( l_i \): perímetro total da região \( O_i \) 
   
   Esse critério expressa a **proporção da fronteira** de \( O_i \) que está em contato com \( O_j \), e é útil para análises mais refinadas de conectividade.
+  
+iv) Outros critérios.
 
 :::
 
@@ -420,7 +426,7 @@ knitr::include_graphics('figuras/vizinhanca.png')
 
 ### 🧮 Moran Global
 
-* Mede a autocorrelação espacial global, ou seja, se valores semelhantes estão agrupados no espaço.
+Mede a autocorrelação espacial global, ou seja, se valores semelhantes estão agrupados no espaço.
 
 
 $$I = \frac{ \sum_{i=1}^{n} \sum_{j=1}^{n} w_{ij} (y_i - \bar{y})(y_j - \bar{y}) }{ \sum_{i=1}^{n} (y_i - \bar{y})^2 }$$
@@ -447,7 +453,7 @@ Sabendo que:
 
 ### 🧮 Moran Local (LISA)
 
-* Avalia a autocorrelação espacial **local**, permitindo identificar regiões com agrupamentos (clusters) ou comportamentos atípicos.
+Avalia a autocorrelação espacial **local**, permitindo identificar regiões com agrupamentos (clusters) ou comportamentos atípicos.
 
 $$I^{(i)} = \frac{n}{\sum_{j=1}^{n} (z_j - \bar{z})^2} \sum_{j=1}^{n} w_{ij} (z_i - \bar{z})(z_j - \bar{z})$$
 
@@ -480,7 +486,7 @@ Sabendo que:
 
 ### 🗺️ LISA Map
 
-O LISA Map é um mapa temático que representa graficamente os resultados do Índice de Moran Local. Ele identifica:
+O LISA Map é um mapa temático que representa graficamente os resultados do Índice de Moran Local, ele identifica:
 
 - Clustering local (agrupamento de valores semelhantes)
 
@@ -498,9 +504,9 @@ O LISA Map é um mapa temático que representa graficamente os resultados do Ín
 | ⚪ **Não significativo**     | Sem associação espacial relevante                        | O valor na região não apresenta padrão espacial detectável            |
 
 
-Os valores do Moran Local são testados por permutação para verificar se o padrão observado é estatisticamente significativo ou poderia ocorrer por acaso.
+* Os valores do Moran Local são testados por permutação para verificar se o padrão observado é estatisticamente significativo ou poderia ocorrer por acaso.
 
-Apenas as regiões significativas (p-valor < 0.05) costumam ser coloridas nos mapas.
+* Apenas as regiões significativas (p-valor < 0.05) costumam ser coloridas nos mapas.
 
 <!-- * Desigualdade no nível distrital na cobertura de saúde reprodutiva, materna, neonatal e infantil na Índia -->
 
@@ -663,6 +669,54 @@ $\rightarrow$ Quanto menor $d_{ij}$, maior é o peso de $j$ na estimação de $\
 <!-- # Serão feitas cinco aplicações da Estatística Espacial utilização o pacote estatístico R: -->
 
 <!-- [Clique aqui para baixar os dados das aplicações](https://drive.google.com/drive/folders/10WMJYlwHcEX9zw3_RUjDQz5DGZByiI2N?usp=sharing) -->
+
+# 📚 Bibliotecas R utilizadas no curso
+
+### 📦 Manipulação e Leitura de Dados
+| Biblioteca     | Funcionalidade                                                              |
+|----------------|------------------------------------------------------------------------------|
+| `dplyr`        | Manipulação eficiente de dados (filtrar, agrupar, resumir, etc.)             |
+| `readr`        | Leitura rápida de arquivos `.csv`, `.tsv`, etc.                              |
+| `tidyverse`    | Conjunto de pacotes para ciência de dados (inclui `ggplot2`, `dplyr`, etc.)  |
+
+---
+
+### 📊 Visualização Gráfica (Gráficos, Mapas e Paletas)
+
+| Biblioteca       | Funcionalidade                                                                 |
+|------------------|---------------------------------------------------------------------------------|
+| `ggplot2`        | Sistema gráfico baseado em camadas para criação de gráficos sofisticados        |
+| `tmap`           | Criação de mapas temáticos estáticos e interativos                              |
+| `leaflet`        | Geração de mapas interativos baseados em JavaScript                             |
+| `ggspatial`      | Adiciona elementos cartográficos ao `ggplot2` (ex: escalas, bússolas)           |
+| `vioplot`        | Geração de gráficos do tipo violin plot                                         |
+| `RColorBrewer`   | Paletas de cores predefinidas para mapas e gráficos                             |
+| `colorspace`     | Manipulação e criação de paletas de cores                                       |
+
+---
+
+
+### 🌍 Dados Espaciais e Geoprocessamento
+| Biblioteca     | Funcionalidade                                                                  |
+|----------------|----------------------------------------------------------------------------------|
+| `sf`           | Manipulação de dados espaciais com o padrão Simple Features                     |
+| `sp`           | Estrutura clássica para dados espaciais (anterior ao `sf`)                       |
+| `geobr`        | Importa mapas do Brasil (IBGE, municípios, estados, etc.)                        |
+| `maptools`     | Leitura e manipulação de dados espaciais vetoriais                              |
+| `raster`       | Leitura e análise de dados geográficos em formato raster                         |
+| `lattice`      | Sistema gráfico útil para visualização multivariada com suporte espacial         |
+
+---
+
+### 📈 Estatística Espacial e Modelagem
+| Biblioteca     | Funcionalidade                                                                         |
+|----------------|-----------------------------------------------------------------------------------------|
+| `spatstat`     | Análise de padrões de pontos no espaço bidimensional                                   |
+| `spdep`        | Cálculo de dependência e autocorrelação espacial (ex: Moran, Geary)                     |
+| `spatialreg`   | Modelagem de regressão espacial (ex: SAR, SEM, SDM)                                     |
+| `spgwr`        | Regressão ponderada geograficamente (GWR)                                               |
+| `gstat`        | Geoestatística e krigagem                                                               |
+| `automap`      | Krigagem automatizada com ajuste automático de variogramas                             |
 
 # **Aplicação I:** Utilizando a biblioteca *tmap* para construção rápida de mapas temáticos
 
