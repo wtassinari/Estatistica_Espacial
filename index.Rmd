@@ -782,10 +782,24 @@ brasil.ufs <- read_state(code_state = "all", year=2019, showProgress = FALSE)
 
 Supondo o `shape file` já estar em algum diretório.
 
-```{r, echo=T, message=FALSE, warning=FALSE, comments=NA, }
+```{r, echo=T, eval=FALSE, message=FALSE, warning=FALSE, comments=NA, }
 brasil.ufs <- st_read("malhas/brasil_ufs_2019.shp")
 ```
 
+Renomeando as variáveis para ser semlhante ao objeto do `geobr`:
+
+```{r, echo=T, eval=FALSE, message=FALSE, warning=FALSE, comments=NA, }
+
+brasil.ufs <- brasil.ufs %>%
+  rename(
+    code_state   = cod_stt,
+    abbrev_state = abbrv_s,
+    name_state   = nam_stt,
+    code_region  = cod_rgn,
+    name_region  = nam_rgn,
+    geom         = geometry
+  )
+```
 ### Primeiro, vamos fazer um gráfico apenas com as geometrias.
 
 ```{r, echo=T}
@@ -2313,7 +2327,9 @@ sp::plot(grid)
 :::
 
 
-### Krigagem
+### Krigagem {.tabset}
+
+#### Visualização via `plot`
 
 ```{r, echo=T, echo=T, message=FALSE, warning=FALSE, results='hide'}
 # Colocando os dados de chuva e o grid na mesma projecao
@@ -2335,6 +2351,8 @@ plot.gau <- plot(mapa_chuva_gau, main = "Modelo Gaussiano")
 plot.wav <- plot(mapa_chuva_wav, main = "Modelo Wave")
 
 ```
+
+#### Visualização via `spplot`
 
 ```{r, echo=T, out.width= "90%"}
 ###############################
