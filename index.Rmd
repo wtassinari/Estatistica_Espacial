@@ -2467,6 +2467,9 @@ leaflet(data = estacoes.longlat, options = leafletOptions(attributionControl = F
   hideGroup(group = c("Bairros"))
 ```
 
+# **Trabalho Final**
+
+Veja aqui os detalhes do 👉 [Trabalho Final](trabalho_final.html)
 
 
 # Bibliografia sugerida
