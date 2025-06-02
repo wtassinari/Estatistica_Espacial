@@ -670,6 +670,15 @@ $\rightarrow$ Quanto menor $d_{ij}$, maior é o peso de $j$ na estimação de $\
 
 <!-- [Clique aqui para baixar os dados das aplicações](https://drive.google.com/drive/folders/10WMJYlwHcEX9zw3_RUjDQz5DGZByiI2N?usp=sharing) -->
 
+# 🗃️ Dados utilizados no curso
+
+Baixe aqui os dados que utilizaremos no curso 👉 [Dados do curso](https://drive.google.com/file/d/1dNZej8k4Of3aAzfTvAnUpgGSEBbn_vOZ/view?usp=sharing)
+
+1) Basta baixar o arquivo `Estatistica_Espacial.zip` e descomprimir;
+
+2) Clicar no arquivo que representa o projeto em R `Estatistica_Espacial.Rproj`
+
+
 # 📚 Bibliotecas R utilizadas no curso
 
 ### 📦 Manipulação e Leitura de Dados
@@ -758,10 +767,23 @@ library(ggspatial)
 
 ```
 
-Para acessar os dados dos limites territoriais de todos os estados brasileiros é necessário utilizar a função *read_state*.
 
-```{r, echo=T}
+### Lendo o Mapa {.tabset}
+
+#### Baixando via `geobr`
+
+Para acessar os dados dos limites territoriais de todos os estados brasileiros é necessário utilizar a função `read_state`.
+
+```{r, echo=T, message=FALSE, warning=FALSE, comments=NA, }
 brasil.ufs <- read_state(code_state = "all", year=2019, showProgress = FALSE)
+```
+
+#### Lendo o `arquivo.shp`
+
+Supondo o `shape file` já estar em algum diretório.
+
+```{r, echo=T, message=FALSE, warning=FALSE, comments=NA, }
+brasil.ufs <- st_read("malhas/brasil_ufs_2019.shp")
 ```
 
 ### Primeiro, vamos fazer um gráfico apenas com as geometrias.
