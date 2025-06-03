@@ -697,10 +697,13 @@ Baixe aqui os dados que utilizaremos no curso 👉 [Dados do curso](https://driv
 | `ggplot2`        | Sistema gráfico baseado em camadas para criação de gráficos sofisticados        |
 | `tmap`           | Criação de mapas temáticos estáticos e interativos                              |
 | `leaflet`        | Geração de mapas interativos baseados em JavaScript                             |
+| `leaflet.extras2`| 	Extensões avançadas para leaflet, mini mapas e outros widgets                             |
+| `leafem`         | Funcionalidades adicionais ao leaflet, como coordenadas do mouse, zoom por camada etc.                             |
 | `ggspatial`      | Adiciona elementos cartográficos ao `ggplot2` (ex: escalas, bússolas)           |
 | `vioplot`        | Geração de gráficos do tipo violin plot                                         |
 | `RColorBrewer`   | Paletas de cores predefinidas para mapas e gráficos                             |
 | `colorspace`     | Manipulação e criação de paletas de cores                                       |
+
 
 ---
 
@@ -1936,6 +1939,9 @@ library(lattice)
 library(automap)
 library(raster)
 library(leaflet)
+library(leaflet.extras2)
+library(leafem)
+
 ```
 
 ### Importando a tabela com a chuva acumulada média de 7 dias das últimas 24hs e 96hs das estações pluviométricas da cidade do Rio de Janeiro
@@ -2477,6 +2483,11 @@ leaflet(data = estacoes.longlat, options = leafletOptions(attributionControl = F
   addProviderTiles("CartoDB.Positron", group = "Ruas") |>
   addProviderTiles("Esri.WorldImagery", options = providerTileOptions(opacity = 0.7), group = "Satélite") |>
   addProviderTiles("CartoDB.Voyager", group = "Voyager") |>
+  # Escala (distância)
+  addScaleBar(position = "bottomleft") |>
+  # Coordenadas do mouse
+  addMouseCoordinates() |>
+  # Define a visualização inicial
   setView(lng = -43.42, lat = -22.90, zoom = 10.4) |>
   # Adicionando os marcadores das estações
   addMarkers(~X, ~Y, popup = ~as.character(est), label = ~as.character(est), group = "Estações") |>

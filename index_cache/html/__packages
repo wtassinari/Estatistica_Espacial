@@ -46,3 +46,5 @@ lattice
 automap
 raster
 RColorBrewer
+leaflet.extras2
+leafem
