@@ -1,5 +1,5 @@
 ---
-title: "Especialização em Estatística Aplicada (PPGEAD): Módulo de Estatística Espacial"
+title: "Especialização em Estatística Aplicada (PPGEAp): Módulo de Estatística Espacial"
 author: |
   | Wagner Tassinari 
   |
