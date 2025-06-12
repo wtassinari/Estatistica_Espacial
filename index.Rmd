@@ -568,7 +568,7 @@ Sendo:
 
 - $W$: matriz de vizinhança espacial (define como cada unidade está conectada às outras);
 
-- $\xi$: erro aleatório normal (sem autocorrelação), com $\mathbb{E}[\xi]()
+- $\xi$: erro aleatório normal (sem autocorrelação).
 :::
 
 $\rightarrow$ Podemos observar que os efeitos da autocorrelação espacial são associados ao termo de erro.
@@ -2152,7 +2152,7 @@ Os modelos ajustados foram: Modelo Linear (`Lin`), Exponencial (`Exp`), Gaussian
 
 :::
 
-```{r echo=FALSE, out.width="90%"}
+```{r echo=T, out.width="90%"}
 # Layout: 2 linhas, 2 colunas
 par(mfrow = c(2, 2))
 
